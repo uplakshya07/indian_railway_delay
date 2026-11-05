@@ -1,0 +1,1158 @@
+Problem Definition: Indian Railways generates massive volumes of operational data daily -- scheduled timetables, station master records, and actual arrival/departure logs. Train delays across extensive rail networks disrupt travel schedules, reduce operational efficiency, and cascade into system-wide congestion. This project aims to analyze historical train delay data to uncover underlying punctuality patterns, pinpoint high-risk stations and bottlenecks, and forecast delays to enable proactive operational and commuter planning.
+
+Project Description: This project focuses on evaluating a comprehensive dataset of passenger train operations across the Indian Railways network over a full year. By analyzing scheduled timetables, station sequences, and recorded delays across multiple service types, the project addresses three primary objectives:
+- Punctuality & Temporal Pattern Analysis: Characterizing delay distributions across different times of the year, days of the week, and train categories (e.g., Express, Superfast, Premium services).
+- Bottleneck & High-Risk Route Identification: Mapping geographical and structural stress points across railway zones, identifying critical transit stations and sections that consistently trigger or amplify delays.
+- Delay Prediction: Forecasting anticipated arrival and departure delays at subsequent stations along a route, transforming raw operational records into actionable foresight.
+
+DATASET DETAILS:
+Source: https://www.kaggle.com/datasets/rxydenxd/indian-railways-delay-dataset
+
+This dataset contains the delay information for about 7,000 trains from Indian railways network for the past one year (2025-02-08 to 2026-02-07), for each day, for each station in their route.
+
+This dataset is scraped entirely from scratch (etrain.info) using Python by the user with username "RXYDENXD" at www.kaggle.com. The goal was to build a comprehensive, multi-table dataset covering the schedules, station metadata, and real-world delay records for nearly the entire Indian Railways passenger network, spanning a full year of operations.
+
+The scraping pipeline used requests, pandas, multi-threaded scraping, which reduced collection time by approximately 90% compared to sequential scraping.
+
+What's Inside?
+Ans: This dataset consists of four interlinked tables:
+
+train_details.csv - 8,992 rows The master list of all trains in the dataset. Contains the train number, name, and service type for every train scraped. The 8,992 trains span 8 categories - Passenger, Express, Superfast, Rajdhani, Shatabdi, Vande Bharat, Garibrath, and Suvidha - covering effectively the full universe of publicly schedulable Indian Railways trains. (train_no,train_name,type_code)
+Columns:
+        train_no : Train number (unique for each train).
+        train_name : Canonical name for each train_no.
+        type_code : Train type (Passenger, Superfast, etc.).
+
+
+station_full_names.csv - 8,963 rows Metadata for every unique station in the network. Includes the station code, full official name, railway zone, and address. Useful for geographic and zone-level aggregations. (station_name,station_full_name,station_zone,station_address)
+Columns:
+        station_name : Abbreviated Station name.
+        station_full_name : Canonical Station name.
+        station_zone : Railway Zone in which the station belongs.
+        station_address : Station Address.
+
+combined_schedule.csv - 172,112 rows The complete timetable for all 8,992 trains. Each row represents one train's stop at one station, with scheduled arrival and departure times, arrival day (for multi-day journeys), station sequence number, and distance from the train's origin station. This table is the backbone for route-level analysis and journey duration calculations. (station_no,station_name,distance_from_origin,arrival_day,arrival_time,departure_day,departure_time,train_no)
+Columns:
+        station_no : Station or Stop number. For origin, station_no = 1, For next station, station_no = 2, and so on.
+        station_name : Abbreviated Station name; For instance: AK is Akola Jn (Full names present in the file station_full_names.csv)
+        distance_from_origin : Distance from Origin station for a particular train.
+        arrival_day : Day # on which the train arrives at the station.
+        arrival_time : Time at which the train arrives. For instance 23:00.
+        departure_day : Day # on which the train departures from the station.
+        departure_time : Time at which the train departures. For instance 23:05.
+        train_no : Train number (unique for each train).
+
+combined_delay.csv - (~30 million) Millions of rows (~900MB) Contains 365 days of real-world delay records (in minutes) for trains at each station they stop at. This is the largest table by far and is what makes this dataset unique - a full year's worth of granular, station-level delay data across the Indian Railways network. (date,station_no,station_name,delay,train_no)
+Columns:
+        date : Date on which the delay was recorded
+        station_no : Station or Stop number. For origin, station_no = 1, For next station, station_no = 2, and so on.
+        station_name : Abbreviated Station name; For instance: AK is Akola Jn (Full names present in the file station_full_names.csv)
+        delay : Delay (in minutes)
+        train_no : Train number (unique for each train).
+
+The combined_delay.csv file provides a single column named delay, which the author simply defines as the delay (in minutes) that a train experienced at a specific station stop.
+
+Note: In standard Indian Railways tracking systems (like NTES, which is typically used for this kind of scraping), "delay" generally refers to the arrival delay at intermediate stations and the departure delay at the train's originating station. We will resolve it during ETL and cleaning stage.
+
+30/09/2026
+
+ATTRIBUTE TYPES:
+Dataset: train_details.csv
+    train_no: Nominal. Although represented by numbers, ID numbers act as names or categories and do not have measurable magnitude.  
+    train_name: String / Nominal. Textual representations of categories or names of things. (e.g. DURG ABKP EXP)
+    type_code: Nominal. Represents distinct categorical states (e.g., Passenger, Express, Rajdhani).   
+Dataset: station_full_names.csv   
+    station_name & station_full_name: String / Nominal. Textual categories used to identify entities.   
+    station_zone: Nominal. Represents a specific categorical region.   
+    station_address: String. A textual attribute consisting of character sequences.   
+combined_schedule.csv   
+    station_no: Ordinal. This acts as a station sequence number, meaning its values have a meaningful order and ranking (e.g., 1st stop, 2nd stop).
+    distance_from_origin: Numeric (Ratio-scaled). A quantitative measurement with an inherent zero-point, allowing you to say one distance is a specific magnitude larger than another.   
+    arrival_day & departure_day: Ordinal or Numeric (Interval-scaled). Days possess a meaningful order and can be measured in equal-sized units.
+    arrival_time & departure_time: Date or Numeric (Interval-scaled). Times can be formatted as specialized date/time strings or treated mathematically as interval-scaled units.
+    train_no & station_name: Nominal and String / Nominal, respectively.
+combined_delay.csv   
+    date: Date. Represents a specific calendar date, which can be stored as a formatted string or converted internally to numeric form.   
+    delay: Numeric (Ratio-scaled). A measurable quantitative value recorded in minutes, possessing a true zero-point (zero minutes of delay). Negative delay represents early arrival.
+    train_no, station_no, & station_name: Retain their Nominal, Ordinal, and String / Nominal mappings from the previous tables. 
+
+
+Above we have Problem definition, Project description, Datasets details, Information about type of data present in datasets. Now from here on our data warehousing and mining procedure starts.
+
+Basic description of the data:
+for each data set:
+- total number of tuples
+for each attribute:
+- number of non-empty tuples
+- number of missing values
+- number of unique values
+- list of unique values
+- count of each unique value
+
+Output files:
+- analysis/step01_01_data_quality.ipynb
+
+
+01/10/2026
+
+RAW CSV DATA [done: till 29/10/2026]
+     ↓
+Data Understanding [done]
+     ↓
+Data Cleaning / ETL
+     ↓
+        ┌─────────────────────┐
+        │   DATA WAREHOUSE    │
+        │                     │
+        │ Dimensions          │
+        │      +              │
+        │ Fact Table          │
+        └─────────┬───────────┘
+                  ↓
+          OLAP Analysis
+                  ↓
+       ┌──────────┼───────────┐
+       ↓          ↓           ↓
+ Punctuality   Bottleneck   Temporal
+ Analysis      Analysis     Analysis
+       │          │           │
+       └──────────┼───────────┘
+                  ↓
+             Data Mining
+                  ↓
+          Delay Prediction
+                  ↓
+          Dashboard / Report
+
+DATA UNDERSTANDING — DATA QUALITY AND RELATIONSHIP ANALYSIS
+
+1. Duplicate Record Analysis
+----------------------------
+
+Complete duplicate records were checked across all four datasets.
+
+Results:
+- train_details.csv: 8,992 rows; 0 complete duplicate records detected.
+- station_full_names.csv: 8,963 rows; 0 complete duplicate records detected.
+- combined_schedule.csv: 172,112 rows; 0 complete duplicate records detected.
+- combined_delay.csv: 38,428,703 rows; no complete duplicates were detected during the chunk-wise scan.
+
+Note:
+The duplicate analysis for combined_delay.csv was performed in chunks because of its large size. Therefore, the result does not by itself prove that duplicate rows do not exist across chunk boundaries. A global duplicate verification should be performed during the later key-resolution stage.
+
+Conclusion:
+No complete duplicate records were detected in the smaller datasets. The delay dataset also showed no duplicates in the chunk-wise scan, but a final global verification is required before the warehouse is finalized.
+
+
+2. Missing-Value Analysis
+-------------------------
+
+Missing values were analyzed for all datasets.
+
+train_details.csv:
+- No missing values were detected.
+
+station_full_names.csv:
+- station_address: 94 missing values.
+- station_name: no missing values.
+- Other analyzed attributes: no missing values.
+
+combined_schedule.csv:
+- arrival_time: 8,673 missing values, approximately 5.04%.
+- departure_time: 8,673 missing values, approximately 5.04%.
+- Other analyzed attributes: no missing values.
+
+combined_delay.csv:
+- delay: 1,874,271 missing values out of 38,428,703 records, approximately 4.88%.
+- Non-missing delay values: 36,554,432.
+
+Important Observation:
+The missing delay values are not uniformly distributed. Some stations have extremely high or complete missingness. Examples include:
+- BNDE: 104/104 missing.
+- BSCN: 52/52 missing.
+- HHAL: 261/261 missing.
+- AJLE: 365/365 missing.
+- STLA: 365/365 missing.
+- MLYC: 728/730 missing.
+- KCVL: 9,107/9,281 missing.
+
+Date-level analysis also showed periods of increased missingness, particularly around February 2025. For example:
+- 2025-02-25: 14,227/104,672 missing (13.59%).
+- 2025-02-24: 13,926/105,151 missing (13.24%).
+- 2025-02-26: 13,648/104,458 missing (13.07%).
+- 2025-02-18: 13,049/104,688 missing (12.46%).
+- 2025-02-19: 12,977/104,513 missing (12.42%).
+
+Conclusion:
+Missing delay values should not be automatically replaced with zero. The missingness appears to have a structured pattern and should be investigated during ETL and key-resolution stages before deciding how these records will be represented in the data warehouse.
+
+
+3. Key Uniqueness Analysis
+--------------------------
+
+train_details.csv contains:
+- 8,992 total rows.
+- 8,720 unique train_no values.
+
+Therefore, train_no is not unique in the raw train master.
+
+Further investigation showed that some duplicate train numbers are associated with different type_code values while often retaining the same train name. Examples include:
+- 1042: SNSI DR SPECIAL EXP-TRAINS / SNSI DR SPECIAL PRM-TRAINS.
+- 1265: MML ABKP SPL PRM-TRAINS / MML ABKP SPL EXP-TRAINS.
+- 2003: NDLS SWARNA SHATABDI SHT-TRAINS / NDLS SWARNA SHATABDI PRM-TRAINS.
+
+Grouping duplicate train_no values showed cases where:
+- row_count = 2
+- train_names = 1
+- type_codes = 2
+
+Conclusion:
+train_no alone should not yet be assumed to be the primary key of the train dimension. The relationship between train_no, type_code, train_name, schedule records, and delay records must be investigated before selecting the final warehouse key.
+
+
+4. Schedule Structure Analysis
+------------------------------
+
+combined_schedule.csv contains:
+- 172,112 rows.
+- 119 unique station_no values.
+- 8,629 unique station_name values.
+
+Interpretation:
+station_no does not represent a globally unique physical station. Instead, it represents the ordinal position of a station within a train's route or journey.
+
+station_name represents the physical station.
+
+Conclusion:
+The warehouse should not use station_no as the station dimension key. The distinction between route-stop sequence and physical station identity must be preserved in the warehouse design.
+
+
+5. Referential Integrity Analysis
+---------------------------------
+
+Train Master → Schedule:
+- 8,673 unique train numbers are present in combined_schedule.csv.
+- 0 schedule train numbers were unmatched in train_details.csv.
+- 47 train numbers present in train_details.csv do not appear in combined_schedule.csv.
+
+Train Master → Delay:
+- 7,033 unique train numbers are present in combined_delay.csv.
+- 0 delay train numbers were unmatched in train_details.csv.
+- 1,687 train numbers present in train_details.csv do not appear in combined_delay.csv.
+
+Station Master → Schedule:
+- 1 schedule station was not found in station_full_names.csv.
+- 335 stations in station_full_names.csv do not appear in combined_schedule.csv.
+
+Station Master → Delay:
+- 63 delay stations were not found in station_full_names.csv.
+- 799 stations in station_full_names.csv do not appear in combined_delay.csv.
+
+Conclusion:
+Most foreign-key relationships are consistent, but the unmatched station values require investigation. Possible explanations include naming or formatting differences, renamed stations, missing master records, or genuine data-quality issues. These records should not be deleted automatically.
+
+
+6. Delay Fact Grain Analysis
+----------------------------
+
+A candidate natural key was defined as:
+
+(date, train_no, station_no)
+
+This represents one observed delay for:
+- one train,
+- on one date,
+- at one route-stop position.
+
+The candidate combination was checked for duplicate occurrences within the processed chunks, and no duplicate combinations were detected during the preliminary chunk-wise analysis.
+
+However, because combined_delay.csv contains 38.4 million records, global uniqueness across all records still needs to be verified.
+
+Conclusion:
+(date, train_no, station_no) is a strong candidate for the natural grain of the delay fact table, but it should not be finalized until global uniqueness has been verified.
+
+
+7. Overall Findings
+-------------------
+
+The Data Quality and Relationship Analysis established the following:
+
+1. No complete duplicates were detected in train_details.csv, station_full_names.csv, or combined_schedule.csv.
+2. No complete duplicates were detected in the chunk-wise scan of combined_delay.csv, but global verification is still required.
+3. Missing values exist in station_address, arrival_time, departure_time, and delay.
+4. Delay missingness is structured by station and date rather than being uniformly distributed.
+5. train_no is not unique in the train master and therefore cannot yet be treated as the final train dimension key.
+6. station_no represents route-stop order rather than physical station identity.
+7. Referential integrity is generally strong, but unmatched station values require investigation.
+8. (date, train_no, station_no) is a strong candidate for the delay fact-table grain, pending global uniqueness verification.
+
+
+8. Conclusion
+-------------
+
+The datasets are sufficiently structured to proceed toward ETL and data warehouse design, but several key issues must be resolved before finalizing the warehouse schema.
+
+Output files:
+- analysis/step01_02_data_quality.ipynb
+- results/duplicate_summary_small_datasets.csv
+- results/duplicate_train_numbers.csv
+- results/missing_delay_by_date.csv
+- results/missing_delay_by_station.csv
+- results/missing_value_summary_combined_delay.csv
+- results/missing_value_summary_small_datasets.csv
+- results/relationship_summary.csv
+
+The most important unresolved issues are:
+- resolving duplicate train_no values,
+- investigating unmatched schedule and delay stations,
+- globally verifying the uniqueness of (date, train_no, station_no),
+- determining the final keys for train and station dimensions, and
+- deciding how structured missing delay values will be represented during ETL.
+
+These issues should be handled in a separate Key Resolution stage rather than being silently corrected during the initial data-understanding phase.
+
+
+9. Next Stage
+-------------
+STEP 1.3 
+│
+├── A. Resolve duplicate train_no
+│
+├── B. Identify the 1 unmatched schedule station
+│
+├── C. Identify the 63 unmatched delay stations
+│
+├── D. Globally verify
+│      (date + train_no + station_no)
+│
+└── E. Determine the exact grain of FACT_DELAY
+
+
+DATA UNDERSTANDING
+        ↓
+DATA QUALITY & RELATIONSHIP ANALYSIS
+        ↓
+KEY RESOLUTION
+    ├── Resolve duplicate train_no
+    ├── Investigate unmatched stations
+    ├── Verify global natural-key uniqueness
+    └── Determine final fact-table grain
+        ↓
+ETL / DATA CLEANING
+        ↓
+DATA WAREHOUSE DESIGN
+        ↓
+OLAP / ANALYSIS
+        ↓
+DATA MINING
+        ↓
+DELAY PREDICTION
+        ↓
+DASHBOARD / REPORT
+
+02/10/2026
+
+5 KEY RESOLUTIONS (STEP 1.3) — RESOLVING STRUCTURAL AMBIGUITIES
+
+Following the Data Quality and Relationship Analysis, a dedicated Key Resolution stage was executed using DuckDB's out-of-core processing capabilities to handle the massive datasets efficiently without chunk-boundary issues.
+
+1. Resolve Duplicate train_no
+
+Initial Discovery: 272 duplicate train_no values were detected. Analysis revealed that these duplicates often shared the same train_name but possessed different type_code values (e.g., a base service type coupled with an overlay tag like 'PRM-TRAINS').
+
+Resolution Rule Applied: The base service type (e.g., EXP, SF, SHT) was retained as the primary_type_code, while the PRM-TRAINS designation was converted into a boolean flag (is_premium_special).
+
+Manual Review Completed: Four specific "NAMO BHARAT RAPID RAIL" rows required manual intervention. These were manually updated via SQL to the T18-TRAINS primary type code, successfully finalizing the 8,720-row train dimension (dim_train_resolved) without dropping valid records.
+
+2. Investigate Unmatched Stations
+
+Initial Discovery: Referential integrity checks flagged 1 schedule station and 63 delay stations that did not exist in the master station_full_names.csv file.
+
+Resolution Applied: Rather than dropping these operational records or breaking the OLAP architecture, these missing station codes were isolated via NOT IN queries and appended to the final station dimension (dim_station_resolved). Placeholder metadata values ("UNKNOWN") were assigned for the full name, zone, and address fields to maintain referential integrity without discarding valuable data.
+
+3. Globally Verify Natural-Key Uniqueness
+
+Initial Discovery: The preliminary chunk-wise scan of the ~30 million row delay dataset could not definitively rule out duplicates across chunk boundaries.
+
+Resolution Applied: Utilizing DuckDB's dynamic memory management, an out-of-core global grouping query evaluated all 38,428,703 rows in a single pass to test the combination of (date, train_no, station_no) for duplicate instances.
+
+4. Determine Final Fact-Table Grain
+
+Resolution Applied: The exact natural grain for FACT_DELAY was evaluated and defined as:
+(date, train_no, station_no)
+
+This explicitly represents one observed delay for one train, at one sequential route-stop position, on one specific calendar date. By identifying the total duplicate combinations globally.
+
+10. Conclusion and Next Stage
+
+Step 1.3 is officially concluded. All structural ambiguities regarding dimension keys and referential integrity have been addressed, and findings have been exported into step01_03_5_FINDINGS.json.
+
+Output files:
+- analysis/step01_03_5_key_resolutions.ipynb
+- results/dim_station_resolved.csv (station_name,station_full_name,station_zone,station_address) -> not added any "added" flag
+- results/dim_train_resolved.csv (train_no,train_name,n_names_raw,primary_type_code,is_premium_special,raw_type_codes,raw_row_count)
+- results/step01_03_5.duckdb
+- results/step01_03_5.duckdb.wal
+- results/step01_03_5_A_duplicate_type_combos.csv
+- results/step01_03_5_A_train_manual_review.csv
+- results/step01_03_5_FINDINGS.json
+
+The project is now fully cleared to transition out of the Data Understanding phase and into the ETL pipeline and Data Warehouse Design phase to build out the final star schema for multidimensional OLAP analysis.
+
+NEXT STAGE:
+
+KEY RESOLUTION [done]
+↓
+ETL / DATA CLEANING
+├── Apply missing value rules (for missing station_address, arrival_time, departure time and delay)
+└── Smooth noisy delay values / handle extreme outliers
+↓
+DATA WAREHOUSE DESIGN
+├── Build Star / Snowflake Schema
+├── Link FACT_DELAY to dim_train_resolved
+└── Link FACT_DELAY to dim_station_resolved
+↓
+OLAP / ANALYSIS
+
+04/10/2026
+
+ETL / DATA CLEANING (STEP 2.1) — MISSING VALUE IMPUTATION AND FIELD RESOLUTION
+
+Following the Key Resolution stage, the ETL and Data Cleaning phase commenced, focusing on missing value imputation and field verification using Pandas and DuckDB out-of-core processing. To preserve data integrity, the original raw datasets in the `data_sets/` directory remained completely unmodified. All cleaning scripts were executed via Jupyter notebooks stored in the `analysis/` directory, and the transformed outputs were routed exclusively to the `results/` directory.
+
+1. Dimension Table Cleaning: Missing Station Addresses
+------------------------------------------------------
+*   Technique Used: Application of a Global Constant for Nominal Attributes.
+*   Before: The resolved station dimension (`dim_station_resolved.csv`) contained 94 missing `station_address` values.
+*   Resolution Applied: A Pandas script replaced these null fields with the explicit global constant "UNKNOWN".
+*   After/Result: 0 remaining null addresses. Referential integrity is strictly maintained for the OLAP warehouse without discarding any dimensional records. The output was saved as `results/dim_station_resolved.csv`.
+
+2. Schedule Fact Cleaning: Missing Arrival & Departure Times
+------------------------------------------------------------
+*   Technique Used: Logical Imputation (Zero-Halt Rule) for Interval-Scaled Attributes.
+*   Before: The `combined_schedule.csv` dataset had 8,673 missing `arrival_time` and 8,673 missing `departure_time` values. A verification script proved these missing states were structural and intentional: missing arrivals occurred exactly and only at origin stations (`station_no = 1`), while missing departures occurred exactly and only at destination stations.
+*   Resolution Applied: The Zero-Halt imputation rule was applied using Pandas. Missing origin arrival times were filled with their scheduled departure time, and missing destination departure times were filled with their scheduled arrival time.
+*   After/Result: 0 remaining missing schedule times. This resolves the missing data while preserving the continuous numeric sequences required for time-series predictive models. The cleaned dataset was saved as `results/combined_schedule_imputed.csv`.
+
+3. Delay Field Context Resolution (important for handling missing delay values)
+---------------------------------
+*   Technique Used: Contextual Hypothesis Testing via Out-of-Core Processing.
+*   Before: The exact operational definition of the `delay` column in the ~30 million row `combined_delay.csv` dataset was ambiguous (whether it represented arrival delay or departure delay).
+    Our defined composite hypothesis posits that the delay field is a context-dependent metric that switches meaning based on the station's position in the route. Specifically, it assumes that:
+        - Departure Delay is recorded exclusively at the train's source or origin station.
+        - Arrival Delay is recorded at all subsequent intermediate and destination stations.
+
+*   Resolution Applied: A hypothesis was formulated to test delays at route boundaries (origin vs. destination). A DuckDB SQL query, explicitly filtering out null values, evaluated all 38 million records and yielded 1,038,047 non-zero delays at origin stations and 1,044,006 non-zero delays at destination stations.
+*   After/Result: The composite context switch hypothesis was confirmed. The `delay` field is context-dependent: it strictly records Departure Delay at the source station (`station_no = 1`) and Arrival Delay at all intermediate and destination stations (`station_no > 1`). These findings establish the foundational ETL rules for numeric modeling and were successfully exported to `results/step02_01_ETL_FINDINGS.json`.
+
+Conclusion and Next Stage
+-------------------------
+Step 2.1 is successfully completed. The initial missing value rules for the dimension and schedule tables have been executed, and the exact operational context of the delay metric has been mathematically defined. The project is now ready to handle the remaining numeric anomalies in the massive delay fact table. 
+
+Output files:
+- analysis/step02_01_ETL_cleaning.ipynb
+- results/dim_station_resolved.csv (updated) (station_name,station_full_name,station_zone,station_address,is_address_imputed)
+- results/combined_schedule_imputed.csv (station_no,station_name,distance_from_origin,arrival_day,arrival_time,departure_day,departure_time,train_no,is_arrival_imputed,is_departure_imputed,is_imputed)
+- results/step02_01_ETL_FINDINGS.json
+
+NEXT STAGE:
+
+KEY RESOLUTION [done]
+        ↓
+ETL / DATA CLEANING 
+    ├── Apply missing value rules (station_address, schedule times) [done]
+    ├── Resolve delay field context [done]
+    ├── Handle 1.87 million missing delay values (Spatiotemporal Imputation)
+    └── Smooth noisy delay values / handle extreme numeric outliers
+        ↓
+DATA WAREHOUSE DESIGN
+    ├── Build Star / Snowflake Schema
+    ├── Link FACT_DELAY to dim_train_resolved
+    └── Link FACT_DELAY to dim_station_resolved
+        ↓
+OLAP / ANALYSIS
+
+06/10/2026
+ETL / DATA CLEANING (STEP 2.2) — SPATIOTEMPORAL IMPUTATION OF MISSING DELAYS
+
+Following the resolution of the delay field context, the ETL pipeline addressed the 1,874,271 structured missing values in the 38-million-row combined_delay.csv fact table. Because train delays cascade sequentially across a network, missing values could not be blindly replaced with zero. A three-step out-of-core DuckDB script was executed to resolve these gaps while preserving time-series continuity for future predictive models.
+
+1. Phantom-Journey Drop (Multi-Day Aware)
+*   Initial doubt: Certain train journeys might have logged zero valid delays across their entire route, representing completely missing sequences (cancelled or short-terminated trains).
+*   Technique Applied: Multi-day aware group-wise filtering and conditional deletion.
+*   Resolution: Journeys with 0 valid delays were identified and entirely dropped before any imputation occurred. Crucially, journeys were grouped by `origin_date` (calculated as `date - (arrival_day - 1)`) rather than just `date` to ensure multi-day train runs were treated as single continuous entities. This prevented the pipeline from generating "phantom trains" that would artificially skew bottleneck identification.
+
+2. Origin Imputation (Per-Train Median & Global Fallback)
+*   Initial Discovery: Forward-filling cannot apply to origin stations (`station_no = 1`) because there is no preceding station to pull data from.
+*   Technique Applied: Class-specific central tendency with a global fallback.
+*   Resolution: Missing departure delays at origin stations were replaced with the median departure delay calculated exclusively for that specific `train_no`. If a specific train had absolutely no historical origin data to compute a median, the system fell back to using the global dataset median for origins. This established a mathematically sound baseline for the start of the journey. 
+
+3. Spatiotemporal Imputation (Forward-Filling)
+*   Initial Discovery: Intermediate and destination stations contained mid-route reporting gaps due to tracking blackouts.
+*   Technique Applied: Spatiotemporal Interpolation (Last Observation Carried Forward).
+*   Resolution: A time-series window function (`LAST_VALUE ... IGNORE NULLS`) was used to drag the preceding known physical delay forward to fill the intermediate gaps. This window was partitioned by `origin_date` and `train_no` (not `date` and `train_no`) to ensure the forward-fill correctly crossed midnight boundaries for multi-day journeys. 
+
+4. Orphaned Null Drop & Provenance Tracking
+*   Initial Discovery: Some mid-route gaps might occur before the first valid station observation, leaving "orphaned" nulls that forward-filling cannot resolve.
+*   Technique Applied: Provenance flagging and targeted deletion.
+*   Resolution: An `is_imputed` boolean column was introduced throughout the ETL to track whether a delay was observed (`FALSE`) or filled by the pipeline (`TRUE`). Any unresolved orphaned nulls remaining after Step 3 (10,990 rows) were dropped to ensure 100% data completeness for downstream modeling.
+
+5. Verification and Export
+*   Technique Applied: Statistical auditing using Pandas and DuckDB.
+*   Result: The datasets successfully verified at 0 remaining missing values. The fully imputed 36.6 million row fact table (exactly 36,629,806 rows) was safely exported without modifying the raw source data.
+
+Conclusion and Next Stage
+Step 2.2 is officially complete. The structurally missing delay values have been fully resolved without injecting phantom congestion into the dataset, and all synthetic values are explicitly trackable via the `is_imputed` flag.
+
+Output files:
+*   analysis/step02_02_ETL_cleaning_merged_with_imputation_flag.ipynb
+*   results/combined_delay_imputed.csv (date, train_no, station_no, station_name, delay, is_imputed)
+
+NEXT STAGE:
+KEY RESOLUTION [done]
+↓
+ETL / DATA CLEANING
+├── Apply missing value rules (station_address, schedule times) [done]
+├── Resolve delay field context [done]
+├── Handle 1.87 million missing delay values (Spatiotemporal Imputation) [done]
+└── Smooth noisy delay values / handle extreme numeric outliers
+↓
+DATA WAREHOUSE DESIGN
+
+
+
+
+
+
+
+
+
+06/10/2026
+ETL / DATA CLEANING (STEP 2.3) — NOISE REDUCTION AND OUTLIER BOUNDARY DEFINITION
+
+Following the spatiotemporal imputation of missing delays, the final step of the ETL pipeline focused on smoothing noisy continuous variables and defining the mathematical boundaries for extreme real-world outliers (bottlenecks) in the 36.6-million-row imputed delay dataset (36,629,806 rows: 35,596,900 observed and 1,032,906 imputed).
+
+Defining Noise vs. Outliers in Train Delays:
+- Noise: Random errors or variance (e.g., faulty instruments, data entry problems, transmission errors). For example, a typographical error logging a 525,592-minute (365-day) delay is garbage data that must be removed before outlier detection to prevent it from blurring the distinction between normal objects and true anomalies.
+- Outliers: A data object that deviates significantly from the rest of the dataset, appearing as if it were generated by a different mechanism.
+- The Project Context: In anomaly mining, "one person’s garbage could be another person’s treasure". While a 14-hour delay deviates wildly from the mean, it is an exceptional treasure indicating a severe structural bottleneck rather than a random error. Our goal is to preserve these genuine extremes while removing impossible transmission errors.
+
+1. Negative Delay (Early Arrival) Validation & Punctuality
+- Initial Discovery: A DuckDB query identified 609,727 negative delay records (1.6646% of the dataset; 584,981 observed and 24,746 imputed), with a mean of -13.10 minutes, median of -10.0 minutes, and standard deviation of 11.09 minutes.
+- Domain Verification: Since the dataset was scraped from an Indian Railways tracking platform (etrain.info, sourced from the National Train Enquiry System), negative values intentionally log early arrivals. The maximum early arrival is -120.0 minutes (2 hours), which is physically valid due to schedule recovery buffers.
+- Result: All 609,727 negative values were retained intact.
+- Punctuality vs. Anomaly: While early arrivals are not the target of our outlier hunt, they are a primary concern for Punctuality & Temporal Pattern Analysis and will be grouped into an "Early / On-Time" category in the OLAP cubes.
+
+2. Noise Removal (Domain Knowledge Cutoff)
+- Initial Discovery: Prior to filtering, the dataset exhibited a maximum delay of 525,592.0 minutes (~365 days), inflating the global standard deviation to 229.88 minutes (mean: 36.75 minutes).
+- Resolution Applied: In Indian Railways operations, a 24-hour (1,440-minute) delay is the standard operational cutoff beyond which daily trains are rescheduled or cancelled to avoid conflicting with the next day's run.
+- Result: A hard cutoff at 1,440 minutes removed 14,982 noise records (14,582 observed and 400 imputed). The cleaned table (combined_delay_cleaned.csv) retains 36,614,824 rows (35,582,318 observed and 1,032,506 imputed, or 2.8199% imputed) with 0 nulls and preserves the `is_imputed` provenance flag.
+
+3. Outlier Boundary Definition (Statistical Dispersion)
+- The Physics of Railway Speed (The Left Wall): Train delays are heavily right-skewed. Because the physical minimum hits a hard wall at -120.0 minutes (close to the 2 SD left boundary of -96.45 minutes), standard deviation is applied exclusively on the unbounded positive side to isolate bottlenecks.
+- Result: Global and positive-tail statistics were recalculated on the cleaned dataset:
+  * All Cleaned Records (<= 1,440 mins): True Mean = 35.60 minutes, True SD = 66.03 minutes (Observed-only check: Mean = 35.68, SD = 65.85).
+    - High-Risk Zone (> 2 SD = 167.65 minutes): 1,273,458 records.
+    - Critical Zone (> 3 SD = 233.68 minutes): 659,943 records.
+  * Positive Tail Only (0 < delay <= 1,440 mins): True Mean = 42.25 minutes, True SD = 69.62 minutes (Observed-only check: Mean = 42.27, SD = 69.38).
+    - High-Risk Zone (> 2 SD = 181.48 minutes): 1,094,178 records.
+    - Critical Zone (> 3 SD = 251.09 minutes): 563,763 records.
+
+4. Concept Hierarchy Generation (Time Dimension)
+- Resolution Applied: Extracted cyclic temporal attributes (year, quarter, month, month_name, day_of_month, day_name, day_of_week, is_weekend) across all 365 contiguous calendar dates (2025-02-08 to 2026-02-07) into `results/dim_date.csv`.
+
+Output files:
+- analysis/step02_03_ETL_cleaning.ipynb
+- analysis/step02_03_ETL_cleaning.duckdb
+- results/combined_delay_cleaned.csv (date, train_no, station_no, station_name, delay, is_imputed)
+- results/dim_date.csv (date_id, year, quarter, month, month_name, day_of_month, day_name, day_of_week, is_weekend)
+- results/step02_03_ETL_FINDINGS.json
+
+07/10/2026
+DATA VALIDATION (STEP 2.4) — DELAY vs SCHEDULE CONSISTENCY CHECKS
+
+Before starting the warehousing and mining phases, the two cleaned fact sources (combined_delay_cleaned.csv: 36,614,824 rows and combined_schedule_imputed.csv: 172,112 rows) were cross-validated against each other and the raw delay file (38,428,703 rows), because every schedule-derived feature and station-level result depends on these two tables describing the same journeys. All checks were executed in DuckDB (analysis/step02_04_consistency_checks.ipynb).
+
+1. Key Uniqueness
+- Technique Applied: Global GROUP BY ... HAVING COUNT(*) > 1 on both tables.
+- Result: 0 duplicated (train_no, station_no) keys in the schedule and 0 duplicated (date, train_no, station_no) keys in the cleaned delay table. The global uniqueness of the fact grain, first established in Step 1.3, was re-confirmed on the cleaned data.
+
+2. Join Integrity
+- Technique Applied: LEFT JOIN of delay_cleaned to schedule_imputed on (train_no, station_no).
+- Result: Row count was strictly preserved (36,614,824 = 36,614,824), confirming zero fan-out, and 0 rows were unmatched on (train_no, station_no) because unscheduled stop numbers were filtered during the Step 2.2 schedule join. However, while 30,018,784 rows (81.9853%) matched the exact station_name in the schedule, 6,596,040 rows (18.0147%) carried a different station_name than the schedule at the same station_no. This mismatch was flagged for resolution in Step 2.5.
+
+3. Day Consistency (arrival_day vs delay date)
+- Initial Discovery: 48,134 of 172,112 schedule stops (27.9667%) occur after Day 1 of a journey (arrival_day > 1), making it essential to verify whether `date` in the delay table represents the journey origin date or the per-station calendar date.
+- Technique Applied (a): Journey completeness per (date, train_no). Across 1,365,062 single-day journeys and 486,982 multi-day journeys, 99.9985% (1,365,041) of single-day journeys and 99.8616% (486,308) of multi-day journeys start at station_no = 1, and 99.9858% (1,364,868) and 98.5581% (479,960) are contiguous.
+- Technique Applied (b): Persistence correlation test. For observed records (is_imputed = FALSE), the demeaned delay at the origin (station_no = 1) on date D was correlated with the demeaned delay at the final scheduled stop on date D+k (for k = 0, 1, 2, 3).
+- Result: The correlation peaks sharply at k = 0 across every journey-duration bucket:
+  * 1-day trains (expected offset 0): r = 0.4715 at k = 0 vs 0.1281 / 0.0928 / 0.0967 for k = 1 / 2 / 3 (n = 1,288,954 pairs).
+  * 2-day trains (expected offset 1): r = 0.6131 at k = 0 vs 0.2489 / 0.2157 / 0.1920 for k = 1 / 2 / 3 (n = 373,456 pairs).
+  * 3-day trains (expected offset 2): r = 0.5262 at k = 0 vs 0.2024 / 0.1553 / 0.1348 for k = 1 / 2 / 3 (n = 60,556 pairs).
+  * 4-day trains (expected offset 3): r = 0.4363 at k = 0 vs -0.0006 / 0.0118 / 0.0612 for k = 1 / 2 / 3 (n = 3,496 pairs).
+  Hence `date` is the journey start date for every stop of a journey. No date shifting is required, and all weekday, month, and quarter attributes in dim_date refer to the day the journey originated.
+
+4. Imputed Row Flag Verification
+- Technique Applied: Cross-checked the `is_imputed` boolean column in `combined_delay_cleaned.csv` against NULL delay records in the raw `combined_delay.csv` on (date, train_no, station_no), and exported the imputed keys.
+- Result: 1,032,506 rows (2.8199%) of the cleaned table are imputed and 35,582,318 rows are observed, with 0 discrepancies (`imputed_flag_but_raw_not_null = 0` and `observed_flag_but_raw_is_null = 0`). Of the 1,874,271 raw missing values, 841,765 are absent from the final cleaned table: 841,365 belonged to phantom journeys, unscheduled stops, or leading orphaned nulls removed in Step 2.2 (leaving 1,032,906 imputed rows after Step 2.2), and the remaining 400 were imputed rows removed by the 1,440-minute noise cutoff in Step 2.3. Both the inline `is_imputed` column and `results/imputed_delay_keys.csv` are preserved so imputed rows can be excluded from test targets during prediction.
+
+Conclusion: Key uniqueness, row conservation, day consistency, and imputation provenance passed with 0 errors. The 18.0147% station_name mismatch rate (6,596,040 rows) requires a dedicated Stop Alignment Resolution step (Step 2.5).
+
+Output files:
+- analysis/step02_04_consistency_checks.ipynb
+- analysis/step02_04_consistency_checks.duckdb
+- results/step02_04_consistency_FINDINGS.json
+- results/imputed_delay_keys.csv (date, train_no, station_no)
+
+07/10/2026
+DATA VALIDATION (STEP 2.5) — STOP ALIGNMENT RESOLUTION
+
+Initial Discovery: In Step 2.4, 18.0147% of cleaned delay rows (6,596,040 rows) carried a different station_name than combined_schedule_imputed.csv at the same station_no. Because stop alignment depends only on (train_no, station_no, station_name) and not on date, the 36,614,824 cleaned delay rows were collapsed into 141,646 distinct stops (weighted by row count) in DuckDB (analysis/step02_05_alignment_diagnosis.ipynb). Station names were verified to be 100% stable per (train_no, station_no) across all dates (0 unstable stops).
+
+1. Classification of Every Delay Stop
+Each delay stop was compared with the schedule at the same station_no and, if different, searched by station_name within that train's schedule:
+- exact: 81.9853% of rows (30,018,784 rows: 29,661,304 observed, 357,480 imputed; 112,948 stops / 79.7396% of stops).
+- shifted: 15.6698% of rows (5,737,461 rows: 5,618,694 observed, 118,767 imputed; 24,495 stops / 17.2931% of stops). The station exists in that train's schedule at a different station_no.
+- different_station: 2.3449% of rows (858,579 rows: 302,320 observed, 556,259 imputed; 4,203 stops / 2.9673% of stops). The station_no exists in the schedule, but the recorded delay station_name does not appear in that train's schedule.
+- orphan_name_not_in_schedule & train_not_in_schedule: 0 stops in combined_delay_cleaned.csv (unscheduled stop numbers beyond the schedule route length were already removed during Step 2.2).
+- format_only (spelling, whitespace, or case differences): 0 stops. Every mismatch is a genuine stop-sequence difference rather than a formatting issue.
+
+2. Root Cause
+The shifts (sched_station_no - delay_station_no) are predominantly negative:
+- -1: 3,596,911 rows (15,944 stops; 62.6917% of shifted rows)
+- -2: 1,073,818 rows (4,402 stops; 18.7159% of shifted rows)
+- -3: 366,257 rows (1,413 stops; 6.3836% of shifted rows)
+- -4: 168,093 rows (622 stops; 2.9297% of shifted rows)
+- +1: 145,450 rows (626 stops; 2.5351% of shifted rows)
+- -5: 99,158 rows (400 stops; 1.7283% of shifted rows)
+The delay table records extra intermediate stops not listed in the static schedule, pushing subsequent delay station_no values forward along the route. This matches the raw route-length comparison across all 7,033 raw delay trains: 4,902 trains have identical route lengths in the schedule, whereas 1,918 trains are 1 to 8 stops longer in the raw delay table, 95 are >8 stops longer, 85 are shorter, and 33 are absent from the schedule. Across the 6,999 trains in the cleaned delay dataset, 4,964 trains are fully clean, 833 are under half affected, 1,019 are over half affected, and 183 are fully affected.
+
+3. Resolution Applied
+- Technique Applied: Built and validated `stop_alignment_map.csv` (train_no, delay_station_no, sched_station_no, cls). Exact stops retain their station_no; shifted stops are re-pointed to the matching station_name within the same train's schedule.
+- Result: 35,756,245 rows (97.6551%) across 137,443 stops (97.0327%) were cleanly aligned with the schedule, with 0 ambiguous name matches, 0 collisions, and 0 duplicate target (train_no, sched_station_no) keys. The remaining 858,579 rows (2.3449%, 4,203 stops; 302,320 observed and 556,259 imputed) are retained in the fact table with `sched_station_no = NULL` so operational delay records are preserved without attaching mismatched schedule attributes.
+
+Conclusion: Schedule features must be joined exclusively through `stop_alignment_map.csv` on (train_no, delay_station_no -> sched_station_no), never directly on raw station_no. Physical station identity always comes from the delay record's `station_name`.
+
+Output files:
+- analysis/step02_05_alignment_diagnosis.ipynb
+- analysis/step02_05_alignment_diagnosis.duckdb
+- results/stop_alignment_map.csv (train_no, delay_station_no, sched_station_no, cls)
+- results/step02_05_alignment_FINDINGS.json
+
+KEY RESOLUTION [done]
+↓
+ETL / DATA CLEANING
+├── Apply missing value rules (for missing station_address, arrival_time, departure time and delay)
+└── Smooth noisy delay values / handle extreme outliers
+↓
+DATA WAREHOUSE DESIGN
+├── Build Star / Snowflake Schema
+├── Link FACT_DELAY to dim_train_resolved
+├── Link FACT_DELAY to dim_station_resolved
+├── Link FACT_DELAY to dim_date
+└── Attach aligned schedule attributes via stop_alignment_map
+↓
+OLAP / ANALYSIS
+
+08/10/2026
+DATA WAREHOUSE DESIGN (STEP 3.1) — STAR SCHEMA BUILD
+
+1. FACT_DELAY
+- Grain: (date_id, train_no, station_no), 36,614,824 rows, identical to the cleaned delay table (combined_delay_cleaned.csv). The operational meaning of delay from Step 2.1 (Departure Delay at station_no = 1, Arrival Delay at station_no > 1) is preserved via the delay_type attribute.
+- Measures and Attributes:
+  * delay (continuous minutes, range -120.0 to 1,440.0).
+  * punctuality_band: early_or_on_time (delay <= 0: 5,572,451 rows / 15.2191%), within_15m_tolerance (0 < delay <= 15: 12,571,302 rows / 34.3339%), and delayed (delay > 15: 18,471,071 rows / 50.4470%).
+  * severity (using Step 2.3 global thresholds): normal (<= 167.653054 min: 35,341,366 rows), high_risk (167.653054 < delay <= 233.679870 min: 613,515 rows), and critical (> 233.679870 min: 659,943 rows). Together, high_risk and critical total 1,273,458 rows (3.4780%), matching the exact >2 SD bottleneck record count established in Step 2.3.
+  * Provenance Flags: is_imputed (1,032,506 imputed rows / 2.8199%; 35,582,318 observed rows / 97.1801%) and is_schedule_time_imputed.
+- Schedule Features: Attached exclusively through stop_alignment_map.csv (train_no, delay_station_no -> sched_station_no) with a boolean has_schedule flag. 35,756,245 rows (97.6551%) carry aligned schedule features (sched_station_no, distance_from_origin, inter_station_distance, arrival_day, arrival_time, departure_day, departure_time, scheduled_arrival_min, scheduled_departure_min, scheduled_halt_minutes, scheduled_travel_min_from_origin), while 858,579 rows (2.3449%) are retained with has_schedule = FALSE.
+- Prediction Evaluation Eligibility: 35,279,998 rows (96.3544%) satisfy both has_schedule = TRUE and is_imputed = FALSE.
+
+2. Dimensions and Star Schema View
+- dim_train: 8,720 unique trains (from dim_train_resolved.csv).
+- dim_station: 9,027 unique stations (from dim_station_resolved.csv).
+- dim_date: 365 unique calendar dates (2025-02-08 to 2026-02-07, journey start date hierarchy: year, quarter, month, month_name, day_of_month, day_name, day_of_week, is_weekend).
+- The olap_star_schema view joins fact_delay to all three dimensions via LEFT JOINs, preserving all 36,614,824 rows.
+- The enriched fact_delay table is materialized inside DuckDB and exported as compressed Parquet (results/fact_delay.parquet, 431.97 MB) to eliminate repeated alignment joins across 36.6 million rows.
+
+3. Validation
+All automated verification checks passed (all_checks_passed = true):
+- Check 1 (Row Conservation): 36,614,824 rows in both fact_delay and olap_star_schema.
+- Check 2 (Schedule Coverage): 35,756,245 rows with has_schedule = TRUE (matches Step 2.5).
+- Check 3 (Imputation Provenance): 1,032,506 rows with is_imputed = TRUE (matches Step 2.4).
+- Check 4 (Schedule Completeness): 0 rows missing distance_from_origin where has_schedule = TRUE.
+- Check 5 (Station Referential Integrity): 0 unmatched stations against dim_station.
+- Check 6 (Train Referential Integrity): 0 unmatched trains against dim_train.
+- Check 7 (Date Referential Integrity): 0 unmatched dates against dim_date.
+- Check 8 (Bottleneck Consistency): 1,273,458 high_risk + critical rows (matches Step 2.3).
+
+4. Initial OLAP Roll-Up by Train Category (olap_star_schema)
+- PASS-TRAINS: 17,743,791 stops | Avg Delay: 32.29 min | On-Time (<=15m): 51.76% | High-Risk+Critical: 2.5022% | Critical: 0.9981%
+- EXP-TRAINS: 13,177,628 stops | Avg Delay: 37.03 min | On-Time (<=15m): 46.56% | High-Risk+Critical: 3.7463% | Critical: 2.0430%
+- SF-TRAINS: 4,888,438 stops | Avg Delay: 43.53 min | On-Time (<=15m): 47.23% | High-Risk+Critical: 5.9833% | Critical: 3.7252%
+- T18-TRAINS (Vande Bharat / Namo Bharat): 338,666 stops | Avg Delay: 14.36 min | On-Time (<=15m): 73.51% | High-Risk+Critical: 0.9673% | Critical: 0.4928%
+- PRM-TRAINS (Specials): 155,205 stops | Avg Delay: 96.08 min | On-Time (<=15m): 45.25% | High-Risk+Critical: 17.4183% | Critical: 13.5885%
+- RAJ-TRAINS (Rajdhani): 114,441 stops | Avg Delay: 31.56 min | On-Time (<=15m): 63.69% | High-Risk+Critical: 4.0763% | Critical: 2.7228%
+- SHT-TRAINS (Shatabdi): 98,842 stops | Avg Delay: 14.66 min | On-Time (<=15m): 76.40% | High-Risk+Critical: 1.0896% | Critical: 0.6060%
+- GRB-TRAINS (Garib Rath): 97,813 stops | Avg Delay: 50.97 min | On-Time (<=15m): 48.69% | High-Risk+Critical: 7.4101% | Critical: 5.1598%
+
+5. Rules Carried into the Mining Phase
+- Prediction uses a date-based train/test split and is evaluated strictly on rows with has_schedule = TRUE and is_imputed = FALSE (35,279,998 eligible rows). severity and punctuality_band are never used as input features because they are direct thresholds on the target.
+- Bottleneck ranking uses rates (share of high_risk + critical arrivals and delay amplification deltas) with a minimum traffic filter, not raw counts.
+- All weekday, month, and quarter attributes refer to the journey start date.
+
+Conclusion and Next Stage
+Step 3.1 is officially complete. The data warehouse Star Schema is built, validated, and materialized for OLAP cube analysis and data mining.
+
+Output files:
+- analysis/step03_01_build_star_schema.ipynb
+- results/fact_delay.parquet (431.97 MB)
+- results/dim_train.csv, results/dim_station.csv, results/dim_date.csv
+- results/step03_01_star_schema.duckdb
+- results/step03_01_STAR_SCHEMA_FINDINGS.json
+
+08/10/2026
+OLAP PREPARATION (STEP 3.2) — ANALYTICAL VIEWS, DENOMINATORS & PARTITION SEPARATION
+
+Before executing multidimensional OLAP cube aggregations, reusable analytical views and standardized denominators were established in DuckDB (`results/step03_01_star_schema.duckdb`) on top of the validated Star Schema (`analysis/step03_02_analytical_views.ipynb`).
+
+1. Reusable DuckDB Analytical Views & Row Conservation
+Seven standardized analytical views were registered with explicit 0/1 indicator columns (`is_early`, `is_exact_ontime`, `is_early_or_ontime`, `is_on_time_15m`, `is_delayed_gt_15m`, `is_high_risk_only`, `is_critical_only`, `is_bottleneck_gt_2sd`):
+- `vw_olap_base` (All Warehouse Records): 36,614,824 rows.
+- `vw_olap_observed` (Default OLAP Denominator, `is_imputed = FALSE`): 35,582,318 rows (97.1801%).
+- `vw_olap_imputed` (Imputed Records Only, `is_imputed = TRUE`): 1,032,506 rows (2.8199%).
+- `vw_olap_observed_arrival` (Observed Intermediate & Destination Arrivals, `is_imputed = FALSE AND station_no > 1`): 33,773,361 rows (94.9161% of observed).
+- `vw_olap_observed_origin` (Observed Origin Departures, `is_imputed = FALSE AND station_no = 1`): 1,808,957 rows (5.0839% of observed).
+- `vw_olap_prediction_eligible` (`is_imputed = FALSE AND has_schedule = TRUE`): 35,279,998 rows (96.3544% of warehouse).
+- `vw_olap_schedule_missing` (`has_schedule = FALSE`): 858,579 rows (2.3449% of warehouse).
+
+All partition conservation checks passed (`obs + imp = 36,614,824`; `obs_arrival + obs_origin = 35,582,318`; sum of 2x2 partitions = `36,614,824`).
+
+2. 2x2 Partition Separation Matrix (`is_imputed` x `has_schedule`)
+- Segment 1 (`is_imputed = FALSE, has_schedule = TRUE` — Prediction Eligible): 35,279,998 rows (96.3544%) across 6,961 trains and 8,143 stations | Mean: 35.6840 min | Median: 16.0 min | SD: 65.7689 min | On-Time (<=15m): 49.3031% | Delayed (>15m): 50.6969% | Bottleneck (>2 SD): 3.4644% (Critical >3 SD: 1.7870%).
+- Segment 2 (`is_imputed = FALSE, has_schedule = FALSE` — Observed Schedule-Missing): 302,320 rows (0.8257%) across 1,881 trains and 1,417 stations | Mean: 34.8785 min | Median: 12.0 min | SD: 74.6829 min | On-Time (<=15m): 55.6109% | Bottleneck (>2 SD): 4.2475% (Critical: 2.4322%).
+- Segment 3 (`is_imputed = TRUE, has_schedule = TRUE` — Imputed With Schedule): 476,247 rows (1.3007%) across 2,906 trains and 4,363 stations | Mean: 34.5108 min | Median: 11.0 min | SD: 80.0685 min | On-Time (<=15m): 57.0351% | Bottleneck (>2 SD): 4.3857% (Critical: 2.6406%).
+- Segment 4 (`is_imputed = TRUE, has_schedule = FALSE` — Imputed Schedule-Missing): 556,259 rows (1.5192%) across 1,718 trains and 1,005 stations | Mean: 31.5586 min | Median: 12.0 min | SD: 63.8663 min | On-Time (<=15m): 55.7073% | Bottleneck (>2 SD): 3.1449% (Critical: 1.7188%).
+
+3. Baseline Denominator Benchmarks (Origin Departure vs. Arrival Context)
+Separating `station_no = 1` (Departure Delay) from `station_no > 1` (Arrival Delay) on observed records reveals a sharp structural contrast:
+- Observed All Stops (`vw_olap_observed`, 35,582,318 rows): Mean = 35.6772 min | Median = 16.0 min | SD = 65.8498 min | IQR = 36.0 min | P90 = 88.0 min | P95 = 137.0 min | Early (<0m) = 1.6440% | Exact On-Time (0m) = 13.4446% | On-Time (<=15m) = 49.3567% | Delayed (>15m) = 50.6433% | Bottleneck (>2 SD) = 3.4710% (High-Risk: 1.6786%, Critical: 1.7925%).
+- Observed Arrival Stops Only (`station_no > 1`, 33,773,361 rows): Mean = 37.0132 min | Median = 17.0 min | SD = 66.7293 min | IQR = 37.0 min | P90 = 90.0 min | P95 = 140.0 min | Early (<0m) = 1.7317% | Exact On-Time (0m) = 11.8823% | On-Time (<=15m) = 47.3639% | Delayed (>15m) = 52.6361% | Bottleneck (>2 SD) = 3.6011% (High-Risk: 1.7418%, Critical: 1.8593%).
+- Observed Origin Departures Only (`station_no = 1`, 1,808,957 rows): Mean = 10.7329 min | Median = 1.0 min | SD = 38.7766 min | IQR = 4.0 min | P90 = 25.0 min | P95 = 55.0 min | Early (<0m) = 0.0072% | Exact On-Time (0m) = 42.6131% | On-Time (<=15m) = 86.5624% | Delayed (>15m) = 13.4376% | Bottleneck (>2 SD) = 1.0436% (High-Risk: 0.4981%, Critical: 0.5455%).
+  * Key Insight: Trains depart their origin within 15 minutes of schedule 86.56% of the time (median departure delay = 1.0 minute), but accumulate delay en route, causing intermediate/destination arrival punctuality (<=15m) to drop to 47.36% (median arrival delay = 17.0 minutes).
+
+Output files:
+- analysis/step03_02_analytical_views.ipynb
+- results/olap_step03_02_partition_summary.csv
+- results/olap_step03_02_denominator_benchmarks.csv
+- results/olap_step03_02_station_traffic_eligibility.csv
+- results/step03_02_OLAP_FINDINGS.json
+
+09/10/2026
+MULTIDIMENSIONAL OLAP ANALYSIS (STEP 3.3) — TRAIN CATEGORIES, ZONES, STATIONS & TEMPORAL CUBES
+
+Using the default observed analytical view (`vw_olap_observed`, `is_imputed = FALSE`, 35,582,318 rows) established in Step 3.2, multidimensional OLAP roll-ups, drill-downs, and 2D cuboids were executed in DuckDB (`analysis/step03_03_olap_cubes.ipynb`).
+
+1. Cube 1: Train-Category OLAP Analysis & Premium Special Drill-Down
+- Volume Dominance: PASS-TRAINS (17,519,157 stops, 49.2356% share across 3,126 trains) and EXP-TRAINS (12,605,410 stops, 35.4261% share across 2,071 trains) account for 84.6617% of all observed stops, followed by SF-TRAINS (4,690,135 stops, 13.1811% share across 1,356 trains).
+- Punctuality Leaders: Daytime intercity premium services achieve the highest punctuality and lowest bottleneck rates:
+  * SHT-TRAINS (Shatabdi): Mean = 14.83 min | Median = 6.0 min | SD = 39.26 min | On-Time (<=15m) = 76.20% | Early (<0m) = 4.23% | Bottleneck (>2 SD) = 1.1112% (Critical >3 SD = 0.6159%).
+  * T18-TRAINS (Vande Bharat / Namo Bharat): Mean = 14.71 min | Median = 6.0 min | SD = 36.69 min | On-Time (<=15m) = 73.11% | Early (<0m) = 5.98% | Bottleneck (>2 SD) = 0.9948% (Critical = 0.5102%).
+  * RAJ-TRAINS (Rajdhani): Mean = 31.64 min | Median = 9.0 min | SD = 86.72 min | On-Time (<=15m) = 63.47% | Bottleneck (>2 SD) = 4.0713%.
+- High-Congestion Categories:
+  * PRM-TRAINS (Specials): Mean = 96.33 min | Median = 20.0 min | SD = 182.02 min | P90 = 316.0 min | P95 = 490.0 min | On-Time (<=15m) = 44.83% | Bottleneck (>2 SD) = 17.3976% (Critical = 13.5443%).
+  * GRB-TRAINS (Garib Rath): Mean = 51.44 min | Median = 17.0 min | SD = 109.24 min | On-Time (<=15m) = 48.21% | Bottleneck (>2 SD) = 7.5256% (Critical = 5.2165%).
+  * SF-TRAINS (Superfast): Mean = 43.68 min | Median = 17.0 min | SD = 87.53 min | On-Time (<=15m) = 46.98% | Bottleneck (>2 SD) = 6.0042% (Critical = 3.7381%).
+- Drill-Down on `is_premium_special`: Drilling into `EXP-TRAINS` by the `is_premium_special` boolean flag (resolved in Step 1.3) reveals that the 28 special-tagged Express trains (`is_premium_special = TRUE`, 67,441 stops) suffer a mean delay of 95.11 min and a 15.1881% bottleneck rate, compared to 36.83 min and 3.6780% for regular Express trains (`is_premium_special = FALSE`, 12,537,969 stops).
+
+2. Cube 2: Railway-Zone Performance Analysis
+Across major railway zones (excluding SCOR which has only 46 observed stops across 2 stations):
+- Highest Bottleneck Rate Zones:
+  * SECR (South East Central Railway, 1,285,594 stops): Bottleneck (>2 SD) = 7.7402% (High-Risk: 3.8690%, Critical: 3.8713%) | Mean = 57.82 min | Median = 30.0 min | On-Time (<=15m) = 35.97%.
+  * SER (South Eastern Railway, 1,492,985 stops): Bottleneck = 7.7059% (High-Risk: 3.1406%, Critical: 4.5654%) | Mean = 53.93 min | Median = 18.0 min | On-Time (<=15m) = 47.58%.
+  * NER (North Eastern Railway, 1,900,489 stops): Bottleneck = 6.4270% (Critical: 3.5569%) | Mean = 45.86 min | Median = 16.0 min | On-Time (<=15m) = 49.58%.
+  * ECR (East Central Railway, 3,766,394 stops): Bottleneck = 5.9396% | Mean = 52.44 min | Median = 29.0 min | On-Time (<=15m) = 34.79%.
+  * WCR (West Central Railway, 1,379,190 stops): Bottleneck = 5.2162% | Mean = 45.10 min | Median = 22.0 min | On-Time (<=15m) = 39.83%.
+- Highest Punctuality / Lowest Bottleneck Zones:
+  * SWR (South Western Railway, 1,657,982 stops): Bottleneck = 0.5810% | Mean = 18.80 min | Median = 11.0 min | On-Time (<=15m) = 60.19%.
+  * SR (Southern Railway, 3,399,071 stops): Bottleneck = 0.7448% | Mean = 16.04 min | Median = 9.0 min | On-Time (<=15m) = 66.47%.
+  * WR (Western Railway, 2,609,114 stops): Bottleneck = 0.8888% | Mean = 14.48 min | Median = 7.0 min | On-Time (<=15m) = 72.77%.
+  * NWR (North Western Railway, 2,080,927 stops): Bottleneck = 1.0244% | Mean = 19.12 min | Median = 10.0 min | On-Time (<=15m) = 63.29%.
+
+3. Cube 3: Station-Level Punctuality & Bottleneck Analysis (>= 1,000 Observed Stops/Year)
+- Traffic Filter Coverage: Out of 8,214 stations with observed records, 7,076 stations (86.15%) meet the >= 1,000 observed stops/year threshold, accounting for 34,876,656 stops (98.02% of all observed network traffic).
+- Top Overall Station Bottlenecks (>= 1,000 stops):
+  1. CTHR (Chitahra, WCR, 2,189 stops): Bottleneck = 32.0694% (High-Risk: 20.8771%, Critical: 11.1923%) | Mean = 133.77 min | Median = 132.0 min.
+  2. TKYR (Tikaria, WCR, 2,189 stops): Bottleneck = 29.9680% | Mean = 129.65 min | Median = 127.0 min.
+  3. SWR (Sonua, SER, 3,779 stops): Bottleneck = 29.6110% (Critical: 17.0415%) | Mean = 134.26 min | Median = 101.0 min.
+  4. SAGM (Sagma, WCR, 2,189 stops): Bottleneck = 29.0544% | Mean = 125.46 min | Median = 123.0 min.
+  5. PRZ (Parsa, NER, 4,167 stops): Bottleneck = 28.9897% (Critical: 18.7905%) | Mean = 131.57 min | Median = 78.0 min.
+  * Notable Mid-Sized Junctions in Top 15: SRC (Santragachi Jn, SER, 17,415 stops, 121 trains) at 27.4763% bottleneck rate (19.3511% Critical) and CKP (Chakradharpur, SER, 14,662 stops, 80 trains) at 26.5653%.
+- Top Major Transit Hub Bottlenecks (>= 25,000 Observed Stops/Year):
+  1. TATA (Tatanagar Jn, SER, 29,404 stops, 155 trains): Bottleneck = 18.8716% (Critical: 12.3453%) | Mean = 88.40 min.
+  2. G (Gondia Jn, SECR, 30,544 stops, 168 trains): Bottleneck = 15.6299% (Critical: 9.8841%) | Mean = 85.65 min.
+  3. KGP (Kharagpur Jn, SER, 39,907 stops, 245 trains): Bottleneck = 15.4259% (Critical: 10.6197%) | Mean = 83.20 min.
+  4. GKP (Gorakhpur Jn, NER, 37,028 stops, 223 trains): Bottleneck = 13.4358% (Critical: 8.2424%) | Mean = 70.38 min.
+  5. BSP (Bilaspur Jn, SECR, 27,634 stops, 144 trains): Bottleneck = 13.2084% (Critical: 8.1711%) | Mean = 68.59 min.
+  Followed by CPR (Chhapra, NER, 10.4368%), BJU (Barauni Jn, ECR, 10.2957%), BSL (Bhusaval Jn, CR, 10.2151%), BLS (Balasore, SER, 10.1765%), AK (Akola Jn, CR, 10.0753%), and NGP (Nagpur, CR, 10.0718%).
+
+4. Cube 4: Temporal Hierarchy Roll-Up & Drill-Down (Quarterly, Monthly, Weekday)
+- Quarterly Trajectory: Q3 2025 (Jul–Sep) was the most punctual quarter (Mean = 31.90 min, Median = 14.0 min, On-Time <=15m = 51.89%, Bottleneck = 2.7651%), whereas Q4 2025 (Mean = 38.96 min, Bottleneck = 4.0717%) and Q1 2026 (Mean = 39.81 min, Median = 19.0 min, On-Time <=15m = 43.92%, Bottleneck = 4.0847%) reflect severe winter fog and holiday congestion.
+- Monthly Extremes:
+  * Worst Month: December 2025 (3,006,328 stops) peaked at Mean = 44.97 min, Median = 20.0 min, P90 = 111.0 min, On-Time (<=15m) = 43.92%, and Bottleneck = 5.4084% (Critical = 3.0005%), followed by February 2025 (Mean = 41.23 min, Bottleneck = 4.8418%) and January 2026 (Mean = 40.19 min, Median = 20.0 min, On-Time <=15m = 43.64%, Bottleneck = 4.1458%).
+  * Best Months: August 2025 (Mean = 31.02 min, Median = 14.0 min, On-Time <=15m = 52.38%, Bottleneck = 2.5579%) and April 2025 (Mean = 31.43 min, Median = 14.0 min, On-Time <=15m = 53.02%, Bottleneck = 2.6735%).
+- Day-of-Week Stability: Punctuality is nearly invariant across days of the week (median = 16.0 min Monday–Saturday, 15.0 min Sunday). Thursday/Friday record the highest mean delays (36.13 / 36.18 min; Bottleneck = 3.5956% / 3.5762%), while Tuesday/Wednesday/Sunday record the lowest (35.17 / 35.18 / 35.27 min; Sunday On-Time <=15m = 50.08%).
+
+5. Cube 5: Cross-Dimensional 2D Cuboids (Zone x Train Category)
+- Worst Interaction Cells (>= 1,000 stops): PRM-TRAINS operating in SER (3,014 stops: Mean = 309.93 min, Median = 171.0 min, Bottleneck = 50.2654%, Critical = 42.1699%), NER (18,356 stops: Mean = 169.90 min, Bottleneck = 36.2988%), and ECR (11,025 stops: Mean = 186.27 min, Bottleneck = 35.8639%). Among regular high-volume categories, SF-TRAINS in SER (169,733 stops: Mean = 97.47 min, Bottleneck = 19.6314%) and SECR (122,152 stops: Mean = 87.04 min, Bottleneck = 17.9285%) represent the largest systemic stress corridors.
+- Best Interaction Cells: RAJ-TRAINS in NWR (0.0000% bottleneck), SHT-TRAINS in WR (0.0355% bottleneck), and PASS-TRAINS in WR (1,155,708 stops: 0.0716% bottleneck, 78.13% On-Time <=15m) and SR (1,486,985 stops: 0.0744% bottleneck, 76.54% On-Time <=15m).
+
+Output files:
+- analysis/step03_03_olap_cubes.ipynb
+- results/olap_step03_03_train_category.csv
+- results/olap_step03_03_train_category_premium_drilldown.csv
+- results/olap_step03_03_railway_zone.csv
+- results/olap_step03_03_station_performance_ge1000.csv
+- results/olap_step03_03_station_top20_bottlenecks_ge1000.csv
+- results/olap_step03_03_station_top20_major_hubs_ge25000.csv
+- results/olap_step03_03_station_top20_punctual_ge1000.csv
+- results/olap_step03_03_temporal_quarterly.csv
+- results/olap_step03_03_temporal_monthly.csv
+- results/olap_step03_03_temporal_weekday.csv
+- results/olap_step03_03_cuboid_zone_x_traintype.csv
+- results/olap_step03_03_cuboid_month_x_traintype.csv
+- results/figures/step03_03_train_category_delay_bottleneck.png
+- results/figures/step03_03_railway_zone_bottleneck_rates.png
+- results/figures/step03_03_monthly_temporal_trend.png
+- results/step03_03_OLAP_FINDINGS.json
+
+10/10/2026
+PUNCTUALITY & TEMPORAL PATTERN DISCOVERY (STEP 3.4) — ARRIVAL VS. ORIGIN, ROUTE PROGRESSION, AMPLIFICATION & IMPUTATION AUDIT
+
+Following the multidimensional OLAP cube roll-ups in Step 3.3, Step 3.4 isolated intermediate/destination arrival delays (`station_no > 1`, `is_imputed = FALSE`: 33,773,361 rows) from origin departure delays (`station_no = 1`, `is_imputed = FALSE`: 1,808,957 rows), analyzed spatial-temporal delay accumulation and station-to-station amplification deltas, and audited the distributional differences between observed (35,582,318 rows) and imputed (1,032,506 rows) records (`analysis/step03_04_pattern_discovery.ipynb`).
+
+1. Arrival Delay (`station_no > 1`) vs. Origin Departure Delay (`station_no = 1`)
+Separating origin departures from en-route arrivals across train categories and zones demonstrates that Indian Railways delays are predominantly generated and amplified en route rather than at the origin:
+- Service Category Contrast:
+  * SF-TRAINS: Origin departures are 92.66% on time (<=15m; Mean = 9.74 min, Median = 1.0 min, Bottleneck >2 SD = 1.6276%), but arrival punctuality (<=15m) falls to 44.51% (Mean = 45.51 min, Median = 18.0 min, SD = 88.79 min, P90 = 109.0 min, P95 = 197.0 min, Bottleneck = 6.2406%, Critical >3 SD = 3.8824%).
+  * EXP-TRAINS: Origin departures are 92.22% on time (Mean = 7.36 min, Median = 1.0 min, Bottleneck = 0.8157%), while arrival punctuality drops to 44.57% (Mean = 38.26 min, Median = 19.0 min, SD = 67.54 min, P90 = 89.0 min, P95 = 143.0 min, Bottleneck = 3.8491%, Critical = 2.0947%).
+  * PASS-TRAINS: Origin departures are 82.06% on time (Mean = 12.52 min, Median = 1.0 min), while arrival punctuality is 49.67% (Mean = 33.65 min, Median = 16.0 min, SD = 55.88 min, Bottleneck = 2.6123%).
+  * SHT-TRAINS & T18-TRAINS: Maintain high punctuality across both regimes. SHT-TRAINS achieve 95.74% on-time departures (Mean = 4.52 min, Median = 0.0 min) and 73.06% on-time arrivals (Mean = 16.49 min, Median = 8.0 min, IQR = 14.0 min, Bottleneck = 1.2087%). T18-TRAINS achieve 96.25% on-time departures (Mean = 4.42 min, Median = 1.0 min) and 69.67% on-time arrivals (Mean = 16.23 min, Median = 8.0 min, Early <0m = 6.87%, Bottleneck = 1.0668%).
+  * PRM-TRAINS: Experience severe delays at origin (Mean = 34.18 min, SD = 114.75 min, P90 = 81.0 min, Bottleneck = 7.0568%) that compound en route to a mean arrival delay of 101.69 min (Median = 23.0 min, SD = 185.72 min, IQR = 94.0 min, P90 = 331.0 min, P95 = 505.0 min, Severe >60m = 32.15%, Bottleneck = 18.2899%, Critical = 14.2717%).
+- Zonal Arrival Performance (`station_no > 1`):
+  * Highest Arrival Bottleneck Zones: SECR (8.0187% bottleneck, Mean = 59.61 min, Median = 31.0 min, Delayed >15m = 65.81%), SER (7.9903% bottleneck, Critical = 4.7362%, Mean = 55.78 min), NER (6.6386% bottleneck, Mean = 47.37 min), and ECR (6.0706% bottleneck, Mean = 53.67 min, Median = 30.0 min, Delayed >15m = 66.77%).
+  * Most Punctual Arrival Zones: WR (71.30% <=15m, Mean = 15.18 min, Median = 8.0 min, Bottleneck = 0.9354%), SR (64.65% <=15m, Mean = 16.84 min, Median = 10.0 min, Bottleneck = 0.7816%), NWR (61.99% <=15m, Mean = 19.70 min, Bottleneck = 1.0525%), and SWR (58.09% <=15m, Mean = 19.67 min, Bottleneck = 0.6017%).
+
+2. Route Progression, Distance Scaling & Terminal Schedule Padding Discovery
+- Monotonic En-Route Accumulation: Across intermediate stops, delay and dispersion climb steadily with stop sequence:
+  * Stop 1 (Origin): Mean = 10.73 min | Median = 1.0 min | SD = 38.78 min | Delayed (>15m) = 13.44% | Bottleneck = 1.0436%.
+  * Stops 2–5 (Early Route): Mean = 20.69 min | Median = 9.0 min | SD = 46.41 min | Delayed (>15m) = 33.31% | Bottleneck = 1.4616%.
+  * Stops 6–10 (Mid-Early Route): Mean = 30.06 min | Median = 16.0 min | SD = 54.90 min | Delayed (>15m) = 50.40% | Bottleneck = 2.1398%.
+  * Stops 11–20 (Mid Route): Mean = 39.35 min | Median = 22.0 min | SD = 63.64 min | Delayed (>15m) = 59.98% | Bottleneck = 3.1985%.
+  * Stops 21–35 (Mid-Late Route): Mean = 52.56 min | Median = 28.0 min | SD = 77.92 min | Delayed (>15m) = 65.87% | Bottleneck = 5.8554%.
+  * Stops 36+ (Long-Haul Tail): Mean = 69.65 min | Median = 35.0 min | SD = 98.38 min | Delayed (>15m) = 69.43% | Bottleneck = 10.9755% (Critical = 5.8762%).
+- Terminal Schedule Padding (The Early-Arrival Phenomenon): At the final stop of a journey (`7_Terminal Destination`, 1,849,874 stops), mean delay drops to 28.15 min, median delay drops to 6.0 min, and on-time arrival (<=15m) rebounds to 64.38%. Crucially, while intermediate stops (Stops 2 to 36+) log 0.00% early arrivals (`delay < 0`), 31.61% of all terminal destination arrivals are early (`delay < 0`). This proves that Indian Railways concentrates schedule recovery buffers (slack time) on the final segment approaching the destination terminal.
+- Distance-from-Origin Scaling: Arrival delays and bottleneck rates increase sharply with route distance: from Mean = 25.64 min (Median = 12.0 min, Bottleneck = 1.5991%) at 1–100 km, to Mean = 50.10 min (Bottleneck = 6.5253%) at 501–1000 km, Mean = 73.11 min (Bottleneck = 12.0920%) at 1001–1500 km, and Mean = 92.31 min (Median = 38.0 min, SD = 139.24 min, IQR = 105.0 min, Bottleneck = 17.5875%, Critical = 11.3193%) beyond 1,500 km.
+
+3. Diurnal (Time-of-Day) Arrival Pattern
+Evaluating arrival delays across scheduled arrival hours reveals a clear diurnal cycle:
+- Best Window: Early Morning (04:00–07:59, 18.47% of arrivals) achieves the lowest mean arrival delay (30.38 min), lowest median (13.0 min), highest on-time rate (54.39% <=15m), and lowest bottleneck rate (2.7797%).
+- Daytime Buildup: Morning Peak (08:00–11:59) averages 34.67 min (Median = 17.0 min), Evening Peak (16:00–19:59) averages 37.58 min (Median = 18.0 min), and Afternoon (12:00–15:59) averages 39.39 min (Median = 18.0 min, Bottleneck = 4.0467%).
+- Overnight Peak Congestion: Night (20:00–23:59: Mean = 41.69 min, Median = 20.0 min, Delayed >15m = 56.88%, Bottleneck = 4.4296%) and Late Night (00:00–03:59: Mean = 43.56 min, Median = 21.0 min, Delayed >15m = 57.93%, Bottleneck = 4.9709%) experience the worst arrival delays due to cumulative daytime knock-on delays and overnight freight/maintenance blocks.
+
+4. Station Delay Amplification vs. Recovery (`delay - prev_delay`, >= 1,000 Observed Transitions)
+By computing consecutive station-to-station delay deltas (`mean_delay_delta_min`) on observed records, stations that actively generate delay were separated from stations that merely inherit upstream delay:
+- Top Delay-Amplifying Stations:
+  1. SBGB (Sutei Badagan, SER, 2,161 transitions): Mean Delta = +48.97 min (upstream 3.53 min -> arrival 52.50 min).
+  2. MQN (Manyamkonda, SCR, 2,837 transitions): Mean Delta = +42.07 min, Median Delta = +34.0 min (amplifies >5m on 77.09% of runs).
+  3. BTQ (Betnoti, SER, 3,538 transitions): Mean Delta = +37.00 min.
+  4. DKU (Dumri Khurd, SECR, 1,343 transitions): Mean Delta = +30.60 min.
+  5. KRS (Karisath, ECR, 4,954 transitions): Mean Delta = +30.32 min, Median Delta = +25.0 min (amplifies >5m on 72.29% of runs).
+- Major Junction Amplifiers: High-volume SER hubs TATA (Tatanagar Jn, 18,838 transitions, 114 trains: Mean Delta = +23.20 min, Median Delta = +10.0 min; upstream 97.05 min -> arrival 120.25 min) and SRC (Santragachi Jn, 15,700 transitions, 102 trains: Mean Delta = +22.62 min, Median Delta = +7.0 min; upstream 106.30 min -> arrival 128.92 min) both inherit severe delays and amplify them by >22 minutes on average.
+- Top Delay-Recovering (Buffer) Stations: Terminal and padded-approach stations absorb upstream delays, led by COA (Kakinada Port, SCR: Mean Delta = -79.68 min, Median Delta = -84.0 min, recovering >5m on 97.80% of runs), KTKA (-53.13 min), KRMR (-51.04 min), JNRD (-47.57 min), SGRL (-45.65 min), ABKP (-45.44 min), PURI (ECOR, 6,103 transitions: Mean Delta = -41.77 min), and SHM (Shalimar, SER: Mean Delta = -39.10 min).
+
+5. Observed (`is_imputed = FALSE`) vs. Imputed (`is_imputed = TRUE`) Distributional Audit
+- Origin Context (`station_no = 1`): Imputed origin records (42,392 rows, 2.2898%) have a lower mean delay (6.45 min vs. 10.73 min observed), lower median (0.0 min vs. 1.0 min), lower SD (24.63 min vs. 38.78 min), and an 8.3x lower bottleneck rate (0.1250% vs. 1.0436% observed) because per-train median imputation smooths out tail departures.
+- Arrival Context (`station_no > 1`): Imputed arrival records (990,114 rows, 2.8481%) have a lower median (12.0 min vs. 17.0 min observed) and mean (34.05 min vs. 37.01 min observed), but higher standard deviation (72.94 min vs. 66.73 min observed) and higher bottleneck/critical rates (3.8711% / 2.2306% vs. 3.6011% / 1.8593% observed), because LOCF forward-filling carries extreme delays across reporting blackouts during severe disruptions.
+- Temporal Imputation Bias: In December 2025 (winter fog peak), imputed records averaged 50.93 min with an 8.0443% bottleneck rate vs. 44.97 min and 5.4084% for observed records. This confirms the necessity of the modeling rule established in Step 3.1: imputed records (`is_imputed = TRUE`) are used only to maintain time-series lag continuity and must be strictly excluded from test-set evaluation targets.
+
+Conclusion and Next Stage
+Steps 3.2, 3.3, and 3.4 are officially complete. The Data Warehousing and Multidimensional OLAP phase has characterized network punctuality across service categories, railway zones, stations, route stages, and temporal cycles, and validated the modeling rules for the Data Mining phase.
+
+Output files:
+- analysis/step03_04_pattern_discovery.ipynb
+- results/olap_step03_04_arrival_delay_by_train_category.csv
+- results/olap_step03_04_origin_departure_by_train_category.csv
+- results/olap_step03_04_arrival_delay_by_zone.csv
+- results/olap_step03_04_route_stage_progression.csv
+- results/olap_step03_04_distance_band_progression.csv
+- results/olap_step03_04_diurnal_time_of_day.csv
+- results/olap_step03_04_station_top20_delay_amplifiers_ge1000.csv
+- results/olap_step03_04_station_top20_delay_recoverers_ge1000.csv
+- results/olap_step03_04_obs_vs_imp_by_stop_context.csv
+- results/olap_step03_04_obs_vs_imp_by_train_category.csv
+- results/olap_step03_04_obs_vs_imp_by_month.csv
+- results/figures/step03_04_route_stage_progression.png
+- results/figures/step03_04_diurnal_arrival_delay.png
+- results/figures/step03_04_observed_vs_imputed_train_category.png
+- results/step03_04_OLAP_FINDINGS.json
+
+DATA UNDERSTANDING (done)
+        ↓
+DATA QUALITY & RELATIONSHIP ANALYSIS (done)
+        ↓
+KEY RESOLUTION (done)
+        ↓
+ETL / DATA CLEANING (done)
+        ↓
+DATA WAREHOUSE DESIGN (done)
+        ↓
+OLAP / ANALYSIS (done)
+        ↓
+DATA MINING
+        ↓
+DELAY PREDICTION
+        ↓
+
+11/10/2026
+PHASE 4: NETWORK BOTTLENECK ANALYSIS & DELAY PREDICTION
+STEP 4.1 — RAILWAY NETWORK & BOTTLENECK ANALYSIS
+
+1. Chronological Partition & Governance Audit
+To enforce strict temporal integrity across all 36,614,824 warehouse records (365 calendar days: 2025-02-08 to 2026-02-07), the dataset was partitioned chronologically into an 80/10/10 split prior to empirical network aggregation:
+- Training Partition (2025-02-08 to 2025-11-26, 292 days): 29,371,388 total rows (80.2172%) | 28,683,754 schedule-aligned rows | 28,502,262 observed rows | 28,264,191 prediction-eligible observed rows (has_schedule = TRUE, is_imputed = FALSE) | 419,563 schedule-aligned imputed rows.
+- Validation Partition (2025-11-27 to 2026-01-01, 36 days): 3,583,894 total rows (9.7881%) | 3,500,548 schedule-aligned rows | 3,498,967 observed rows | 3,470,698 prediction-eligible observed rows | 29,850 schedule-aligned imputed rows.
+- Test Partition (2026-01-02 to 2026-02-07, 37 days): 3,659,542 total rows (9.9947%) | 3,571,943 schedule-aligned rows | 3,581,089 observed rows | 3,545,109 prediction-eligible observed rows | 26,834 schedule-aligned imputed rows.
+
+2. Static Schedule-Based Directed Graph Topology & Centrality
+Constructed exclusively from consecutive scheduled stops (station_no -> station_no + 1) in combined_schedule_imputed.csv to prevent future-information leakage:
+- Graph Scale: |V| = 8,629 physical station nodes and |E| = 31,514 unique directed station-to-station edges.
+- Connectivity: 5 Weakly Connected Components (largest WCC contains 8,598 nodes / 99.64% of the scheduled network) and 36 Strongly Connected Components (largest SCC contains 8,571 nodes / 99.33%).
+- Top Structural Bridge Hubs by Exact Shortest-Path Betweenness Centrality:
+  1. DDU (Pt Deen Dayal Upadhyay Jn, ECR): Betweenness = 0.267430 | Total Degree = 73
+  2. BZA (Vijayawada Jn, SCR): Betweenness = 0.249917 | Total Degree = 73
+  3. NGP (Nagpur, CR): Betweenness = 0.231022 | Total Degree = 58
+  4. CNB (Kanpur Central, NCR): Betweenness = 0.205451 | Total Degree = 76
+  5. NDLS (New Delhi, NR): Betweenness = 0.200971 | Total Degree = 60
+  6. BPQ (Balharshah, CR): Betweenness = 0.195945 | Total Degree = 36
+  7. VGLJ (V Lakshmibai Jhansi, NCR): Betweenness = 0.177607 | Total Degree = 51
+  8. BRC (Vadodara Jn, WR): Betweenness = 0.137264 | Total Degree = 52
+  9. KOTA (Kota Jn, WCR): Betweenness = 0.120870 | Total Degree = 50
+  10. BPL (Bhopal Jn, WCR): Betweenness = 0.119454 | Total Degree = 41
+
+3. Composite Structural-Operational Bottleneck Hubs (>= 20,000 Training Observed Stops)
+Combining static topological centrality (betweenness and degree) with training-period empirical arrival delay and bottleneck (>2 SD) rates identifies the primary systemic stress hubs:
+1. KGP (Kharagpur Jn, SER, 31,950 stops): Composite Score = 0.9382 | Betweenness = 0.076514 | Degree = 50 | Train Mean Arrival Delay = 94.44 min | Bottleneck Rate = 15.3615%.
+2. NGP (Nagpur, CR, 27,027 stops): Composite Score = 0.9241 | Betweenness = 0.231022 | Degree = 58 | Train Mean Arrival Delay = 59.67 min | Bottleneck Rate = 9.5608%.
+3. TATA (Tatanagar Jn, SER, 23,734 stops): Composite Score = 0.9141 | Betweenness = 0.065900 | Degree = 44 | Train Mean Arrival Delay = 110.19 min | Bottleneck Rate = 17.6203%.
+4. BJU (Barauni Jn, ECR, 25,063 stops): Composite Score = 0.9065 | Betweenness = 0.118252 | Degree = 55 | Train Mean Arrival Delay = 61.19 min | Bottleneck Rate = 9.0891%.
+5. BSL (Bhusaval Jn, CR, 39,072 stops): Composite Score = 0.9062 | Betweenness = 0.096378 | Degree = 53 | Train Mean Arrival Delay = 62.53 min | Bottleneck Rate = 9.6207%.
+Followed by GKP (Gorakhpur Jn, NER: 0.8641), VZM (Vizianagram Jn, ECOR: 0.8549), CNB (Kanpur Central, NCR: 0.8457), DDU (ECR: 0.8082), and LKO (Lucknow NR: 0.8071).
+
+4. Transition-Level Delay Amplification (d_v - d_u on Consecutive Scheduled Stops)
+- Highest Delay-Amplifying Directed Transitions (>= 500 Training Transitions):
+  * ASH -> BST (NER, 545 runs): Mean Delta = +89.63 min (140.76 -> 230.39 min), Median Delta = +76.0 min, Amplifies >5m on 84.77% of runs.
+  * MDKU -> TSR (SCR, 874 runs): Mean Delta = +73.42 min (45.25 -> 118.67 min), Median Delta = +83.0 min, Amplifies >5m on 91.53% of runs.
+  * BST -> ASH (NER, 545 runs): Mean Delta = +72.76 min (280.37 -> 353.12 min), Median Delta = +77.0 min.
+  * KTKA -> MQN (SCR, 876 runs): Mean Delta = +72.28 min (17.87 -> 90.15 min), Median Delta = +88.0 min.
+  * CKP -> TATA (SER, 2,115 runs, 22 trains): Mean Delta = +70.79 min (186.23 -> 257.02 min), Median Delta = +67.0 min, Amplifies >5m on 91.25% of runs.
+- High-Volume Trunk Corridor Amplifiers (>= 3,000 Training Transitions):
+  1. KGP -> SRC (SER, 4,027 runs, 54 trains): Mean Delta = +39.83 min (155.08 -> 194.91 min), Median Delta = +34.0 min, Amplifies >5m on 70.25% of runs.
+  2. BVRT -> AKVD (SCR, 3,335 runs, 26 trains): Mean Delta = +25.30 min, Median Delta = +21.0 min.
+  3. NDLS -> CNB (NR -> NCR inter-zone trunk, 4,048 runs, 22 trains): Mean Delta = +21.45 min (23.82 -> 45.27 min), Median Delta = +14.0 min, Amplifies >5m on 72.23% of runs.
+  4. BLS -> KGP (SER, 3,887 runs, 48 trains): Mean Delta = +21.05 min (87.32 -> 108.37 min), Median Delta = +16.0 min.
+  5. HWH -> BWN (ER, 4,505 runs, 25 trains): Mean Delta = +19.61 min (5.77 -> 25.38 min), Median Delta = +19.0 min, Amplifies >5m on 94.69% of runs.
+  6. HWH -> KGP (ER -> SER, 4,407 runs, 29 trains): Mean Delta = +18.31 min, Median Delta = +13.0 min.
+  7. JBP -> KTE (WCR, 5,117 runs, 65 trains): Mean Delta = +17.74 min, Median Delta = +16.0 min.
+
+5. Observational Delay Propagation & Autocorrelation Dynamics
+- Route Lag Persistence (26,528,080 observed training transition pairs):
+  * 1-Step Autocorrelation (k-1 -> k): r = 0.9600 overall (r = 0.9657 across intermediate stops vs. r = 0.9068 approaching terminal stops due to terminal schedule slack).
+  * Multi-Step Decay: r = 0.9375 at Lag 2 (25,048,504 pairs) and r = 0.9162 at Lag 3 (23,592,699 pairs).
+- Regime Retention: Trains in an upstream Bottleneck state (>167.65 min, 831,624 transitions) remain delayed >15 min at the next stop 99.72% of the time (mean downstream delay = 291.48 min, mean delta = +0.75 min, amplifying >5 min on 29.51% of transitions).
+- Inter-Zone vs. Intra-Zone Transitions: Across 918,587 inter-zone boundary transitions (1,284 edges), 29.22% amplify delay by >5 min (vs. 18.90% across 25,609,493 intra-zone transitions), while mean delta is -1.13 min due to schedule handoff padding at zone-border junctions.
+- Temporal Stability Check: Training-period station statistics correlate with full-year statistics at r = 0.9952 (mean arrival delay) and r = 0.9898 (bottleneck rate), confirming that frozen training-period network features are highly stable predictors for future periods without leaking test data.
+
+Output files:
+- analysis/step04_01_network_bottleneck_analysis.ipynb
+- results/step04_01_train_period_station_stats.parquet (8,629 stations)
+- results/step04_01_train_period_transition_stats.parquet (31,514 directed edges)
+- results/step04_01_station_network_bottleneck_summary.csv
+- results/step04_01_top25_composite_bottleneck_hubs.csv
+- results/step04_01_top25_delay_amplifying_transitions.csv
+- results/step04_01_top25_delay_recovering_transitions.csv
+- results/step04_01_top25_trunk_corridor_amplifiers_ge3000.csv
+- results/step04_01_lag_autocorrelation_summary.csv
+- results/step04_01_propagation_regime_transitions.csv
+- results/step04_01_inter_zone_transition_comparison.csv
+- results/figures/step04_01_station_centrality_vs_bottleneck_stress.png
+- results/figures/step04_01_transition_delay_amplification_vs_recovery.png
+- results/figures/step04_01_delay_propagation_regimes_and_autocorrelation.png
+- results/step04_01_NETWORK_FINDINGS.json
+
+11/10/2026
+STEP 4.2 — FEATURE ENGINEERING & PREDICTION DATASET
+
+1. Prediction Objective & Transition Eligibility Audit
+The prediction task forecasts the arrival delay (target_next_delay_min, in minutes) at the next consecutive scheduled station (next_sched_station_no = curr_sched_station_no + 1) using strictly information available at the current stop (curr_sched_station_no = k) and immediately preceding stop (k - 1).
+- Governance & Eligibility Filtering (has_schedule = TRUE, contiguous scheduled stops, curr_is_imputed = FALSE, next_is_imputed = FALSE):
+  * Training Partition (2025-02-08 to 2025-11-26, 292 days): 27,200,874 consecutive journey rows -> 27,171,229 contiguous scheduled transitions (29,645 non-contiguous skipped) -> 26,528,080 eligible observed transitions (643,149 imputed transitions excluded).
+  * Validation Partition (2025-11-27 to 2026-01-01, 36 days): 3,320,092 consecutive journey rows -> 3,316,870 contiguous scheduled transitions (3,222 non-contiguous skipped) -> 3,278,765 eligible observed transitions (38,105 imputed transitions excluded).
+  * Test Partition (2026-01-02 to 2026-02-07, 37 days): 3,388,116 consecutive journey rows -> 3,384,737 contiguous scheduled transitions (3,379 non-contiguous skipped) -> 3,351,989 eligible observed transitions (32,748 imputed transitions excluded).
+- Total Eligible Prediction Dataset: 33,158,834 observed scheduled transitions across the full year (80.0031% Train / 9.8881% Validation / 10.1089% Test), with 0 duplicate keys and 0 null or infinite values across all features and targets.
+
+2. Chronological Split Target Distributions & Seasonal Regime Shift
+- Training (26,528,080 transitions across 6,859 trains and 8,123 target stations): Target Mean = 35.3719 min | Median = 16.0 min | SD = 64.3803 min | P90 = 86.0 min | On-Time (<=15m) = 48.65% | Bottleneck (>2 SD) = 3.2787%.
+- Validation (3,278,765 transitions across 6,737 trains and 8,086 target stations): Target Mean = 46.0862 min | Median = 21.0 min | SD = 79.9224 min | P90 = 113.0 min | On-Time (<=15m) = 41.77% | Bottleneck (>2 SD) = 5.4623%.
+- Test (3,351,989 transitions across 6,659 trains and 8,056 target stations): Target Mean = 41.1616 min | Median = 21.0 min | SD = 67.5695 min | P90 = 100.0 min | On-Time (<=15m) = 41.64% | Bottleneck (>2 SD) = 4.1836%.
+* Analytical Note: Because the chronological Validation (Dec 2025) and Test (Jan–Feb 2026) partitions fall directly inside the North Indian winter fog season identified in Step 3.3, target mean delays (+30.3% in Validation, +16.4% in Test) and bottleneck rates (5.46% and 4.18% vs. 3.28% in Train) provide a rigorous out-of-time stress test under distributional shift.
+
+3. Engineered Features (12 Leakage-Free Predictors) & Training-Set Correlations
+All historical network priors, category priors (m = 50 empirical Bayes shrinkage toward global training arrival mean = 35.3719 min and global delta mean = +0.8528 min), fallback medians (segment distance = 9.0 km, running time = 12.0 min), and z-score standardization parameters were fitted strictly on the 26,528,080 training transitions:
+1. curr_delay_min (Current Stop Delay): Mean = 34.5191 min | SD = 62.6776 min | Median = 16.0 min | Pearson r = +0.9600.
+2. prev_delay_min (Previous Stop Delay): Mean = 32.9613 min | SD = 61.2496 min | Median = 14.0 min | Pearson r = +0.9377.
+3. next_station_hist_arr_delay_min (Smoothed Training Station Arrival Delay): Mean = 35.3982 min | SD = 21.3561 min | Median = 31.4750 min | Pearson r = +0.3374.
+4. prev_delay_delta_min (Upstream Delay Momentum, curr - prev): Mean = +1.5578 min | SD = 15.9323 min | Median = 0.0 min | Pearson r = +0.1717.
+5. transition_hist_delay_delta_min (Smoothed Training Edge Amplification): Mean = +0.8529 min | SD = 8.2889 min | Median = +1.3117 min | Pearson r = +0.1140.
+6. route_progress_ratio (Normalized Stop Position): Mean = 0.5502 | SD = 0.2758 | Median = 0.5526 | Pearson r = +0.1062.
+7. train_category_delay_prior_min (Service Category Prior): Mean = 35.3599 min | SD = 6.0768 min | Range = 9.9784 (SHT Premium) to 96.5849 (EXP Special) | Pearson r = +0.0946.
+8. segment_distance_km (Scheduled Inter-Station Distance): Mean = 20.8544 km | SD = 32.0709 km | Median = 9.0 km | Pearson r = +0.0726.
+9. segment_sched_running_min (Scheduled Transit Duration): Mean = 23.2472 min | SD = 30.1879 min | Median = 12.0 min | Pearson r = +0.0615.
+10. is_terminal_arrival (Terminal Destination Indicator): Mean = 0.0543 (5.43% of transitions) | Pearson r = -0.0357 (reflects terminal schedule slack recovery).
+11. next_sched_arrival_hour (Scheduled Arrival Hour 0-23): Mean = 12.3489 | SD = 6.1944 | Median = 12.0 | Pearson r = +0.0332.
+12. next_station_betweenness (Static Schedule Betweenness Centrality): Mean = 0.006474 | SD = 0.025078 | Max = 0.267430 | Pearson r = +0.0265.
+
+Output files:
+- analysis/step04_02_prediction_dataset.ipynb
+- results/step04_02_train_features.parquet (26,528,080 rows)
+- results/step04_02_val_features.parquet (3,278,765 rows)
+- results/step04_02_test_features.parquet (3,351,989 rows)
+- results/step04_02_preprocessing_artifacts.json
+- results/step04_02_feature_engineering_metadata.csv
+- results/step04_02_split_and_feature_metadata.csv
+- results/figures/step04_02_feature_correlations_and_split_distributions.png
+- results/step04_02_PREDICTION_DATASET_FINDINGS.json
+
+12/10/2026
+STEP 4.3 — DELAY PREDICTION & MODEL EVALUATION
+
+1. Evaluation Scope & Chronological Partition Protocol
+Four models (Persistence Baseline, Linear Regression, Random Forest Regressor, and XGBoost Regressor) were evaluated using the leakage-free 12-feature dataset engineered in Step 4.2:
+- Training Partition (2025-02-08 to 2025-11-26, 26,528,080 transitions): Used a deterministic reservoir sample of 2,500,000 rows (REPEATABLE(42)) for Linear Regression and XGBoost, and a 600,000-row subset for Random Forest Regressor to maintain memory efficiency without loading all 26.53M rows into RAM simultaneously.
+- Validation Partition (2025-11-27 to 2026-01-01): Evaluated on 100% of eligible transitions (3,278,765 rows) for hyperparameter tuning and model selection.
+- Untouched Test Partition (2026-01-02 to 2026-02-07, has_schedule = TRUE, is_imputed = FALSE): Evaluated once on 100% of eligible observed transitions (3,351,989 rows).
+
+2. Hyperparameter Tuning on Chronological Validation Set (n = 3,278,765)
+- Model 1 — Persistence Baseline (y_hat = curr_delay_min):
+  * No free hyperparameters | Train MAE = 7.5882 min, RMSE = 18.3577 min, R² = 0.919518 | Validation MAE = 8.4207 min, RMSE = 20.3487 min, R² = 0.935176.
+- Model 2 — Linear Regression (Standardized Features):
+  * Tested OLS (alpha = 0.0: Val MAE = 7.2529, Val RMSE = 17.9557, Val R² = 0.949526), Ridge (alpha = 10.0: Val MAE = 7.1502, Val RMSE = 17.8032, Val R² = 0.950380), and Ridge (alpha = 1000.0: Val MAE = 7.1508, Val RMSE = 17.8043, Val R² = 0.950374).
+  * Selected Configuration: Ridge (alpha = 10.0), which stabilized the exact linear collinearity among curr_delay_min, prev_delay_min, and prev_delay_delta_min (curr_delay_min - prev_delay_min) and reduced validation RMSE by 0.1525 min over unregularized OLS.
+- Model 3 — Random Forest Regressor (80 trees, max_features = 0.7, max_samples = 0.5):
+  * Tested RF_d10_leaf50 (Val MAE = 6.8474, Val RMSE = 17.7513, Val R² = 0.950669), RF_d12_leaf30 (Val MAE = 6.7152, Val RMSE = 17.4984, Val R² = 0.952064), and RF_d14_leaf20 (Val MAE = 6.6395, Val RMSE = 17.3975, Val R² = 0.952615).
+  * Selected Configuration: RF_d14_leaf20 (max_depth = 14, min_samples_leaf = 20).
+- Model 4 — XGBoost Regressor (tree_method = 'hist', early_stopping_rounds = 20):
+  * Tested XGB_d6_lr0.08 (best_iteration = 213: Val MAE = 7.5334, Val RMSE = 22.5662, Val R² = 0.920278), XGB_d8_lr0.08 (best_iteration = 139: Val MAE = 7.4511, Val RMSE = 22.5195, Val R² = 0.920607), and XGB_d10_lr0.05 (best_iteration = 194: Val MAE = 7.3643, Val RMSE = 22.4499, Val R² = 0.921097).
+  * Selected Configuration: XGB_d10_lr0.05 (max_depth = 10, learning_rate = 0.05, min_child_weight = 100, best_iteration = 194).
+
+3. Final Untouched Test Set Performance (n = 3,351,989 Observed Transitions)
+- 3_Random_Forest (RF_d14_leaf20 — Best Overall Model):
+  * Test MAE = 6.6842 min (-18.58% error reduction vs. Persistence) | Test RMSE = 17.5859 min (-12.95% reduction vs. Persistence) | Test R² = 0.932263 | Median AE = 3.1657 min | Mean Bias = -0.4890 min.
+  * Residual Accuracy: 63.60% within ±5 min, 81.85% within ±10 min, 89.45% within ±15 min (P90 error = 15.55 min, P95 = 23.53 min, P99 = 49.89 min).
+- 2_Linear_Regression (Ridge alpha = 10.0 — Second Best by RMSE & R²):
+  * Test MAE = 7.1739 min (-12.62% vs. Persistence) | Test RMSE = 18.0093 min (-10.86% vs. Persistence) | Test R² = 0.928961 | Median AE = 3.5208 min | Mean Bias = -0.4357 min.
+  * Residual Accuracy: 60.76% within ±5 min, 79.83% within ±10 min, 88.16% within ±15 min (P90 error = 16.75 min, P95 = 24.70 min, P99 = 51.14 min).
+- 4_XGBoost (XGB_d10_lr0.05 — Second Best by MAE, Best Within ±15m Tolerance):
+  * Test MAE = 7.0557 min (-14.06% vs. Persistence) | Test RMSE = 20.7334 min (-2.63% gain vs. Persistence) | Test R² = 0.905846 | Median AE = 3.1712 min | Mean Bias = -0.4064 min.
+  * Residual Accuracy: 63.88% within ±5 min, 82.19% within ±10 min, 89.61% within ±15 min (P90 error = 15.41 min, P95 = 23.75 min, P99 = 55.91 min).
+- 1_Persistence_Baseline (identity_curr_delay):
+  * Test MAE = 8.2098 min | Test RMSE = 20.2024 min | Test R² = 0.910606 | Median AE = 3.0000 min | Mean Bias = -1.2145 min.
+  * Residual Accuracy: 63.76% within ±5 min, 77.36% within ±10 min, 84.41% within ±15 min (P90 error = 22.00 min, P95 = 32.00 min, P99 = 63.00 min).
+
+4. Stratified Diagnostic Analysis: Severity Regimes, Terminal Padding & Service Categories
+- Performance Across Target Delay Severity:
+  * Normal Regime (<= 167.65 min; 3,211,756 transitions / 95.8164% of Test; Actual Mean = 30.62 min): XGBoost achieves the best performance across every metric (MAE = 5.9179 min, RMSE = 11.6855 min, R² = 0.883306, Median AE = 3.0274 min), outperforming Random Forest (MAE = 6.1284 min, RMSE = 12.2212 min, R² = 0.872362), Linear Regression (MAE = 6.6439 min, RMSE = 12.8525 min), and Persistence (MAE = 7.6381 min, RMSE = 15.5621 min).
+  * High-Risk Regime (167.65 to 233.68 min; 70,498 transitions / 2.1032% of Test; Actual Mean = 195.95 min): Random Forest achieves the lowest MAE (13.7485 min vs. 13.7625 min XGBoost, 13.8931 min Linear, 16.0326 min Persistence), while XGBoost achieves the lowest RMSE (26.0778 min vs. 26.8829 min RF and 31.4174 min Persistence). Note that R² is negative across all models in this narrow slice (-0.95 to -1.84) because the restricted within-band variance of [167.65, 233.68] min is smaller than transition error variance.
+  * Critical Regime (> 233.68 min; 69,735 transitions / 2.0804% of Test; Actual Mean = 370.14 min): Linear Regression achieves the best performance (MAE = 24.7937 min, RMSE = 84.8664 min, R² = 0.739468), closely followed by Random Forest (MAE = 25.1412 min, RMSE = 85.1825 min, R² = 0.737523), both beating Persistence (MAE = 26.6317 min, RMSE = 86.4085 min). In contrast, XGBoost (`tree_method = 'hist'`) degrades sharply in the extreme critical tail (MAE = 52.6791 min, RMSE = 116.9890 min, R² = 0.504914) because histogram quantile binning coarsens the sparse extreme upper tail (234 to 1,440 min), inflating overall squared error despite superior accuracy on the 97.92% non-critical majority.
+- Intermediate Stops vs. Terminal Destination Schedule Padding:
+  * Intermediate Stops (3,170,311 transitions / 94.58% of Test; Mean = 41.60 min): Random Forest leads with MAE = 6.3653 min, RMSE = 15.5983 min, and R² = 0.944871 (vs. Persistence MAE = 7.5027 min, RMSE = 17.9894 min).
+  * Terminal Destination Stops (181,678 transitions / 5.42% of Test; Mean = 33.47 min): Persistence suffers massive over-prediction bias (Mean Bias = +12.7458 min, MAE = 20.5490 min, Median AE = 14.0 min) because it ignores terminal schedule slack recovery discovered in Step 3.4. Machine learning models capture this slack recovery via `is_terminal_arrival`, `transition_hist_delay_delta_min`, and `segment_sched_running_min`, cutting terminal MAE by >40%: XGBoost achieves Terminal MAE = 12.0675 min (Median AE = 6.1073 min), Random Forest achieves MAE = 12.2490 min (lowest Terminal RMSE = 38.2124 min, R² = 0.796016, Bias = +0.1362 min), and Linear Regression achieves MAE = 13.1213 min.
+- Performance Across Train Service Categories:
+  * High-Volume Categories: Random Forest is the top performer on PASS-TRAINS (1,605,294 rows: MAE = 5.7245 min vs. 6.8722 min Persistence), EXP-TRAINS (1,221,168 rows: MAE = 7.0194 min, RMSE = 14.0792 min, R² = 0.958972 vs. 8.6942 min Persistence), SF-TRAINS (448,801 rows: MAE = 8.5765 min, RMSE = 17.2362 min, R² = 0.960303 vs. 10.9728 min Persistence), PRM-TRAINS (13,711 rows: MAE = 16.8886 min vs. 20.5208 min Persistence), and GRB-TRAINS (8,593 rows: MAE = 10.1135 min, R² = 0.975479).
+  * Daytime & Premium Intercity Categories: XGBoost achieves the lowest MAE on T18-TRAINS / Vande Bharat (36,004 rows: MAE = 7.1080 min, RMSE = 14.6370 min, R² = 0.881387 vs. 9.2494 min Persistence), SHT-TRAINS / Shatabdi (8,214 rows: MAE = 7.2329 min, RMSE = 12.6798 min, R² = 0.901507 vs. 9.5611 min Persistence), and RAJ-TRAINS / Rajdhani (10,204 rows: MAE = 11.8983 min vs. 14.0093 min Persistence).
+
+5. Feature Importance & Physical Interpretation
+- Dominant Autoregressive State: `curr_delay_min` (71.94% RF importance, 82.34% XGBoost gain importance) and `prev_delay_min` (24.41% RF, 13.97% XGBoost) account for 96.35% (RF) and 96.31% (XGBoost) of tree-based predictive power, reflecting the r = 0.9600 1-step spatial-temporal autocorrelation along train routes.
+- Network & Schedule Correction Modifiers: Among non-autoregressive features, `transition_hist_delay_delta_min` (1.81% RF, 0.88% XGBoost, +7.48 standardized linear coefficient), `next_station_hist_arr_delay_min` (0.71% RF, 0.20% XGBoost), `is_terminal_arrival` (0.82% XGBoost gain), `prev_delay_delta_min` (0.49% RF, 0.58% XGBoost), and `segment_sched_running_min` (-5.12 standardized linear coefficient, capturing schedule slack absorption) provide the critical adjustments that reduce error by 18.58% over persistence.
+
+Output files:
+- analysis/step04_03_delay_prediction_models.ipynb
+- results/models/step04_03_linear_regression.joblib
+- results/models/step04_03_random_forest.joblib
+- results/models/step04_03_xgboost.json
+- results/step04_03_hyperparameter_tuning_log.csv
+- results/step04_03_model_comparison_overall.csv
+- results/step04_03_test_performance_by_severity.csv
+- results/step04_03_test_performance_by_stop_type.csv
+- results/step04_03_test_performance_by_train_category.csv
+- results/step04_03_feature_importance_comparison.csv
+- results/figures/step04_03_model_comparison_mae_rmse_r2.png
+- results/figures/step04_03_actual_vs_predicted_and_residuals.png
+- results/figures/step04_03_performance_by_severity_and_train_type.png
+- results/figures/step04_03_feature_importance_comparison.png
+- results/step04_03_MODEL_EVALUATION_FINDINGS.json
+
+13/10/2026
+PHASE 5: PATTERN EVALUATION, DASHBOARD DEVELOPMENT & FINAL REPORT (STEPS 5.1 – 5.4)
+
+Following the completion of the network bottleneck and regression modeling phase, Phase 5 consolidated independent model evaluation (including exact MSE alongside RMSE, MAE, and R²), verified cross-period bottleneck persistence across chronological splits, deployed interactive visual dashboards, and synthesized the final project report.
+
+1. Step 5.1 — Independent Model Evaluation (MSE, RMSE, MAE, R² & Baseline Benchmarking)
+- Chronological Partition Protocol: Evaluated strictly on observed, schedule-aligned transitions (has_schedule = TRUE, is_imputed = FALSE) across Training (2025-02-08 to 2025-11-26: 26,528,080 transitions), Validation (2025-11-27 to 2026-01-01: 3,278,765 transitions), and the untouched Independent Test Set (2026-01-02 to 2026-02-07: 3,351,989 transitions).
+- Untouched Test Set Results (n = 3,351,989):
+  * 3_Random_Forest (RF_d14_leaf20 — Best Overall Model):
+    - MSE = 309.2639 min² (-24.23% reduction vs. Persistence) | RMSE = 17.5859 min (-12.95%) | MAE = 6.6842 min (-18.58%) | R² = 0.932263 (+0.021657 vs. Persistence).
+  * 2_Linear_Regression (Ridge alpha = 10.0 — Second Best by MSE/RMSE & Best in Critical Tail):
+    - MSE = 324.3349 min² (-20.53% vs. Persistence) | RMSE = 18.0093 min (-10.86%) | MAE = 7.1739 min (-12.62%) | R² = 0.928961 (+0.018355 vs. Persistence).
+  * 4_XGBoost (XGB_d10_lr0.05 — Best in Normal Regime & Within ±15m Tolerance, Second Best Overall MAE):
+    - MSE = 429.8739 min² (+5.33% vs. Persistence due to histogram binning in >233.68m critical tail) | RMSE = 20.7334 min (+2.63%) | MAE = 7.0557 min (-14.06%) | R² = 0.905846.
+    - Normal Regime (<=167.65 min, 3,211,756 rows / 95.82% of Test): MSE = 136.5509 min², RMSE = 11.6855 min, MAE = 5.9179 min, R² = 0.883306 (best across all models).
+  * 1_Persistence_Baseline (y_hat = curr_delay_min):
+    - MSE = 408.1370 min² | RMSE = 20.2024 min | MAE = 8.2098 min | R² = 0.910606.
+- Terminal Schedule Padding MSE Reduction: At terminal destination stops (181,678 test transitions), Persistence incurs MSE = 1,701.18 min² (RMSE = 41.2454 min, MAE = 20.5490 min, Mean Bias = +12.7458 min), whereas Random Forest reduces terminal MSE to 1,460.19 min² (RMSE = 38.2124 min, MAE = 12.2490 min, Mean Bias = +0.1362 min) and XGBoost reduces terminal MAE to 12.0675 min.
+
+2. Step 5.2 — Pattern Evaluation: Cross-Period Persistence, Limitations & Imputation Effects
+- Cross-Period Bottleneck Persistence: Station arrival delay and bottleneck (>2 SD) rankings discovered in the 292-day Training period remain highly persistent across both the Validation (Dec 2025 winter fog peak) and Test (Jan–Feb 2026) periods. High-stress zones (SECR, SER, NER, ECR, WCR) and composite bottleneck hubs (KGP, NGP, TATA, BJU, BSL, GKP) consistently remain at the top of the congestion distribution across all three chronological splits, while SWR, SR, WR, and NWR consistently maintain the lowest bottleneck rates (<1.1%).
+- Imputation & Missing-Data Audit:
+  * Raw Missingness & Alignment Filtering: Out of 38,428,703 raw delay records, 1,874,271 (4.88%) lacked delay values and 6,596,040 (18.01% of cleaned rows) exhibited station_no shifts relative to the static schedule. Multi-day origin-date-aware filtering and stop_alignment_map.csv preserved 35,756,245 schedule-aligned rows (97.66%) and isolated 858,579 unaligned rows (has_schedule = FALSE).
+  * Distributional Impact of Imputation: Origin per-train median imputation (42,392 rows) compresses tail variance (SD = 24.63 min vs. 38.78 min observed; bottleneck = 0.1250% vs. 1.0436% observed), whereas intermediate/destination LOCF imputation (990,114 rows) carries extreme delays across reporting blackouts during severe disruptions (SD = 72.94 min vs. 66.73 min observed; Dec 2025 imputed bottleneck rate = 8.0443% vs. 5.4084% observed). Strictly excluding is_imputed = TRUE from prediction targets prevented artificial lag-1 identity inflation (y_hat = curr_delay_min).
+
+3. Step 5.3 — Visual Dashboard Development
+- Built an interactive 5-tab Streamlit dashboard (dashboard/app.py) and a standalone interactive Plotly HTML executive dashboard (dashboard/indian_railways_dashboard.html via analysis/step05_03_visual_dashboard.ipynb) covering:
+  1. Network-wide punctuality overview & 2x2 warehouse partition audit.
+  2. Train-category and railway-zone comparative performance cubes.
+  3. Station centrality vs. bottleneck stress hubs & trunk corridor delay amplifiers.
+  4. Seasonal (winter fog), diurnal, and route-stage progression (terminal padding) trends.
+  5. Regression model evaluation (MSE, RMSE, MAE, R²) & interactive next-station delay simulator.
+
+4. Step 5.4 — Final Project Report
+- Compiled the complete end-to-end technical synthesis covering Methodology, Dataset & Preprocessing, Warehouse & OLAP Results, Graph Mining Findings, Regression Modelling & Evaluation, and Limitations & Future Scope into results/FINAL_PROJECT_REPORT.md.
+
+Output files:
+- analysis/step05_01_independent_model_evaluation.ipynb
+- analysis/step05_02_pattern_evaluation.ipynb
+- analysis/step05_03_visual_dashboard.ipynb
+- dashboard/app.py
+- dashboard/indian_railways_dashboard.html
+- results/step05_01_overall_mse_rmse_mae_r2.csv
+- results/step05_01_severity_mse_evaluation.csv
+- results/step05_01_stop_context_mse_evaluation.csv
+- results/step05_01_train_category_mse_evaluation.csv
+- results/step05_01_MODEL_EVALUATION_FINDINGS.json
+- results/step05_02_station_bottleneck_persistence.csv
+- results/step05_02_zone_cross_period_stability.csv
+- results/step05_02_category_cross_period_stability.csv
+- results/step05_02_imputation_and_limitations_audit.csv
+- results/step05_02_PATTERN_EVALUATION_FINDINGS.json
+- results/figures/step05_01_independent_model_evaluation.png
+- results/figures/step05_02_bottleneck_persistence_and_imputation_audit.png
+- results/FINAL_PROJECT_REPORT.md

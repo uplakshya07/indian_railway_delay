@@ -1,0 +1,115 @@
+{
+    "dimensions_summary": {
+        "dim_train_rows": 8720,
+        "dim_train_unique_keys": 8720,
+        "dim_station_rows": 9027,
+        "dim_station_unique_keys": 9027,
+        "dim_date_rows": 365,
+        "dim_date_unique_keys": 365
+    },
+    "fact_delay_summary": {
+        "total_rows": 36614824.0,
+        "has_schedule_rows": 35756245.0,
+        "has_schedule_pct": 97.6551,
+        "no_schedule_rows": 858579.0,
+        "imputed_rows": 1032506.0,
+        "observed_rows": 35582318.0,
+        "eligible_prediction_eval_rows": 35279998.0,
+        "normal_rows": 35341366.0,
+        "high_risk_rows": 613515.0,
+        "critical_rows": 659943.0,
+        "total_bottleneck_rows": 1273458.0,
+        "early_or_exact_ontime_rows": 5572451.0,
+        "within_15m_rows": 12571302.0,
+        "delayed_gt_15m_rows": 18471071.0,
+        "parquet_size_mb": 431.97,
+        "threshold_2sd_minutes": 167.653054,
+        "threshold_3sd_minutes": 233.67987
+    },
+    "validation_checks": {
+        "fact_rows": 36614824,
+        "star_view_rows": 36614824,
+        "schedule_covered_rows": 35756245,
+        "imputed_rows": 1032506,
+        "missing_distance_when_has_schedule": 0,
+        "unmatched_stations": 0,
+        "unmatched_trains": 0,
+        "unmatched_dates": 0,
+        "bottleneck_rows_check": 1273458,
+        "check1_row_conservation": true,
+        "check2_schedule_coverage_matches_step25": true,
+        "check3_imputed_rows_match_step24": true,
+        "check4_distance_present_for_all_has_schedule": true,
+        "check5_zero_unmatched_stations": true,
+        "check6_zero_unmatched_trains": true,
+        "check7_zero_unmatched_dates": true,
+        "check_bottleneck_count_matches_step23": true,
+        "all_checks_passed": true
+    },
+    "olap_rollup_by_train_type": [
+        {
+            "primary_type_code": "PASS-TRAINS",
+            "total_stops": 17743791,
+            "avg_delay_min": 32.29,
+            "on_time_15m_pct": 51.76,
+            "high_risk_plus_critical_pct": 2.5022,
+            "critical_pct": 0.9981
+        },
+        {
+            "primary_type_code": "EXP-TRAINS",
+            "total_stops": 13177628,
+            "avg_delay_min": 37.03,
+            "on_time_15m_pct": 46.56,
+            "high_risk_plus_critical_pct": 3.7463,
+            "critical_pct": 2.043
+        },
+        {
+            "primary_type_code": "SF-TRAINS",
+            "total_stops": 4888438,
+            "avg_delay_min": 43.53,
+            "on_time_15m_pct": 47.23,
+            "high_risk_plus_critical_pct": 5.9833,
+            "critical_pct": 3.7252
+        },
+        {
+            "primary_type_code": "T18-TRAINS",
+            "total_stops": 338666,
+            "avg_delay_min": 14.36,
+            "on_time_15m_pct": 73.51,
+            "high_risk_plus_critical_pct": 0.9673,
+            "critical_pct": 0.4928
+        },
+        {
+            "primary_type_code": "PRM-TRAINS",
+            "total_stops": 155205,
+            "avg_delay_min": 96.08,
+            "on_time_15m_pct": 45.25,
+            "high_risk_plus_critical_pct": 17.4183,
+            "critical_pct": 13.5885
+        },
+        {
+            "primary_type_code": "RAJ-TRAINS",
+            "total_stops": 114441,
+            "avg_delay_min": 31.56,
+            "on_time_15m_pct": 63.69,
+            "high_risk_plus_critical_pct": 4.0763,
+            "critical_pct": 2.7228
+        },
+        {
+            "primary_type_code": "SHT-TRAINS",
+            "total_stops": 98842,
+            "avg_delay_min": 14.66,
+            "on_time_15m_pct": 76.4,
+            "high_risk_plus_critical_pct": 1.0896,
+            "critical_pct": 0.606
+        },
+        {
+            "primary_type_code": "GRB-TRAINS",
+            "total_stops": 97813,
+            "avg_delay_min": 50.97,
+            "on_time_15m_pct": 48.69,
+            "high_risk_plus_critical_pct": 7.4101,
+            "critical_pct": 5.1598
+        }
+    ]
+}

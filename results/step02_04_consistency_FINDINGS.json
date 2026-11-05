@@ -1,0 +1,94 @@
+{
+    "row_counts": {
+        "delay_cleaned_rows": 36614824,
+        "schedule_imputed_rows": 172112,
+        "raw_delay_rows": 38428703
+    },
+    "check1_key_uniqueness": {
+        "duplicated_schedule_keys_train_station": 0,
+        "duplicated_delay_keys_date_train_station": 0
+    },
+    "check2_join_integrity": {
+        "total_joined_rows": 36614824.0,
+        "unmatched_schedule_stop_rows": 0.0,
+        "unmatched_schedule_stop_pct": 0.0,
+        "station_name_mismatch_rows": 6596040.0,
+        "station_name_mismatch_pct": 18.0147,
+        "exact_match_rows": 30018784.0,
+        "exact_match_pct": 81.9853
+    },
+    "check3_day_consistency": {
+        "schedule_multiday_share": {
+            "total_sched_stops": 172112.0,
+            "stops_after_day1": 48134.0,
+            "pct_stops_after_day1": 27.9667
+        },
+        "journey_completeness": [
+            {
+                "journey_type": "multi_day",
+                "total_journeys": 486982,
+                "starts_at_stop1": 486308,
+                "pct_starts_at_stop1": 99.8616,
+                "contiguous_journeys": 479960,
+                "pct_contiguous": 98.5581
+            },
+            {
+                "journey_type": "single_day",
+                "total_journeys": 1365062,
+                "starts_at_stop1": 1365041,
+                "pct_starts_at_stop1": 99.9985,
+                "contiguous_journeys": 1364868,
+                "pct_contiguous": 99.9858
+            }
+        ],
+        "persistence_correlations": [
+            {
+                "schedule_days": 1,
+                "expected_offset_if_calendar_date": 0,
+                "corr_k0_same_date": 0.4715,
+                "corr_k1_plus_1d": 0.1281,
+                "corr_k2_plus_2d": 0.0928,
+                "corr_k3_plus_3d": 0.0967,
+                "n_pairs_k0": 1288954
+            },
+            {
+                "schedule_days": 2,
+                "expected_offset_if_calendar_date": 1,
+                "corr_k0_same_date": 0.6131,
+                "corr_k1_plus_1d": 0.2489,
+                "corr_k2_plus_2d": 0.2157,
+                "corr_k3_plus_3d": 0.192,
+                "n_pairs_k0": 373456
+            },
+            {
+                "schedule_days": 3,
+                "expected_offset_if_calendar_date": 2,
+                "corr_k0_same_date": 0.5262,
+                "corr_k1_plus_1d": 0.2024,
+                "corr_k2_plus_2d": 0.1553,
+                "corr_k3_plus_3d": 0.1348,
+                "n_pairs_k0": 60556
+            },
+            {
+                "schedule_days": 4,
+                "expected_offset_if_calendar_date": 3,
+                "corr_k0_same_date": 0.4363,
+                "corr_k1_plus_1d": -0.0006,
+                "corr_k2_plus_2d": 0.0118,
+                "corr_k3_plus_3d": 0.0612,
+                "n_pairs_k0": 3496
+            }
+        ]
+    },
+    "check4_imputed_row_reconciliation": {
+        "raw_total_rows": 38428703.0,
+        "raw_null_rows": 1874271.0,
+        "cleaned_total_rows": 36614824.0,
+        "cleaned_imputed_rows": 1032506.0,
+        "cleaned_observed_rows": 35582318.0,
+        "pct_imputed_in_cleaned": 2.8199,
+        "raw_nulls_absent_from_cleaned": 841765.0,
+        "imputed_flag_but_raw_not_null": 0.0,
+        "observed_flag_but_raw_is_null": 0.0
+    }
+}

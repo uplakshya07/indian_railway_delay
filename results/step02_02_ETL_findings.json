@@ -1,0 +1,35 @@
+{
+    "step02_02_phantom_journeys": {
+        "rows_before": 38428703,
+        "rows_after": 36640796,
+        "phantom_journeys_dropped": 39616,
+        "rows_dropped": 1787907,
+        "nulls_before": 1874271,
+        "nulls_remaining": 1043896,
+        "note": "Dropped ALL completely null journeys where non_null_delay_count == 0."
+    },
+    "step02_origin_imputation": {
+        "origins_imputed": 42392,
+        "remaining_nulls": 1001504,
+        "global_median_fallback_used": 1.0
+    },
+    "step03_forward_fill": {
+        "values_interpolated": 990514,
+        "unresolved_nulls": 10990,
+        "total_rows_marked_imputed": 1032906
+    },
+    "step03_5_orphaned_drops": {
+        "rows_before_drop": 36640796,
+        "dropped_orphans": 10990,
+        "remaining_nulls": 0,
+        "final_rows": 36629806,
+        "imputed_rows": 1032906,
+        "note": "Dropped remaining mid-route nulls while retaining is_imputed provenance."
+    },
+    "final_export": {
+        "rows": 36629806,
+        "imputed_rows": 1032906,
+        "file": "combined_delay_imputed.csv",
+        "provenance_column": "is_imputed"
+    }
+}

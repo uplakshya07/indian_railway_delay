@@ -1,0 +1,357 @@
+{
+  "step": "step04_02_prediction_dataset",
+  "prediction_objective": "Predict arrival delay (minutes) at the next scheduled station (sched_station_no = k + 1) using strictly prediction-time information at current station (k) and previous station (k - 1).",
+  "n_features": 12,
+  "feature_columns": [
+    "curr_delay_min",
+    "prev_delay_min",
+    "prev_delay_delta_min",
+    "train_category_delay_prior_min",
+    "route_progress_ratio",
+    "is_terminal_arrival",
+    "segment_distance_km",
+    "segment_sched_running_min",
+    "next_sched_arrival_hour",
+    "next_station_betweenness",
+    "next_station_hist_arr_delay_min",
+    "transition_hist_delay_delta_min"
+  ],
+  "target_column": "target_next_delay_min",
+  "transition_eligibility_audit": [
+    {
+      "split_name": "1_Train (2025-02-08 to 2025-11-26)",
+      "total_consecutive_rows_in_journey": 27200874,
+      "contiguous_sched_transitions": 27171229,
+      "eligible_obs_transitions": 26528080,
+      "excluded_imputed_transitions": 643149,
+      "skipped_non_contiguous_stops": 29645
+    },
+    {
+      "split_name": "2_Validation (2025-11-27 to 2026-01-01)",
+      "total_consecutive_rows_in_journey": 3320092,
+      "contiguous_sched_transitions": 3316870,
+      "eligible_obs_transitions": 3278765,
+      "excluded_imputed_transitions": 38105,
+      "skipped_non_contiguous_stops": 3222
+    },
+    {
+      "split_name": "3_Test (2026-01-02 to 2026-02-07)",
+      "total_consecutive_rows_in_journey": 3388116,
+      "contiguous_sched_transitions": 3384737,
+      "eligible_obs_transitions": 3351989,
+      "excluded_imputed_transitions": 32748,
+      "skipped_non_contiguous_stops": 3379
+    }
+  ],
+  "chronological_split_summary": [
+    {
+      "partition_name": "1_Train",
+      "min_date": "2025-02-08",
+      "max_date": "2025-11-26",
+      "n_days": 292,
+      "n_transitions": 26528080,
+      "n_trains": 6859,
+      "n_target_stations": 8123,
+      "duplicate_transition_keys": 0,
+      "total_nulls_across_features_and_target": 0.0,
+      "target_mean_delay_min": 35.3719,
+      "target_median_delay_min": 16.0,
+      "target_std_delay_min": 64.3803,
+      "target_p90_delay_min": 86.0,
+      "target_on_time_15m_pct": 48.65,
+      "target_bottleneck_gt_2sd_pct": 3.2787,
+      "pct_of_prediction_dataset": 80.0031
+    },
+    {
+      "partition_name": "2_Validation",
+      "min_date": "2025-11-27",
+      "max_date": "2026-01-01",
+      "n_days": 36,
+      "n_transitions": 3278765,
+      "n_trains": 6737,
+      "n_target_stations": 8086,
+      "duplicate_transition_keys": 0,
+      "total_nulls_across_features_and_target": 0.0,
+      "target_mean_delay_min": 46.0862,
+      "target_median_delay_min": 21.0,
+      "target_std_delay_min": 79.9224,
+      "target_p90_delay_min": 113.0,
+      "target_on_time_15m_pct": 41.77,
+      "target_bottleneck_gt_2sd_pct": 5.4623,
+      "pct_of_prediction_dataset": 9.8881
+    },
+    {
+      "partition_name": "3_Test",
+      "min_date": "2026-01-02",
+      "max_date": "2026-02-07",
+      "n_days": 37,
+      "n_transitions": 3351989,
+      "n_trains": 6659,
+      "n_target_stations": 8056,
+      "duplicate_transition_keys": 0,
+      "total_nulls_across_features_and_target": 0.0,
+      "target_mean_delay_min": 41.1616,
+      "target_median_delay_min": 21.0,
+      "target_std_delay_min": 67.5695,
+      "target_p90_delay_min": 100.0,
+      "target_on_time_15m_pct": 41.64,
+      "target_bottleneck_gt_2sd_pct": 4.1836,
+      "pct_of_prediction_dataset": 10.1089
+    }
+  ],
+  "feature_statistics_and_correlations_train": [
+    {
+      "feature_name": "curr_delay_min",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 34.519096,
+      "train_std": 62.677551,
+      "train_min": -57.0,
+      "train_p25": 4.0,
+      "train_median": 16.0,
+      "train_p75": 39.0,
+      "train_max": 1440.0,
+      "corr_with_target_train": 0.96
+    },
+    {
+      "feature_name": "prev_delay_min",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 32.961334,
+      "train_std": 61.249649,
+      "train_min": -57.0,
+      "train_p25": 3.0,
+      "train_median": 14.0,
+      "train_p75": 37.0,
+      "train_max": 1440.0,
+      "corr_with_target_train": 0.9377
+    },
+    {
+      "feature_name": "prev_delay_delta_min",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 1.557762,
+      "train_std": 15.932256,
+      "train_min": -1440.0,
+      "train_p25": -1.0,
+      "train_median": 0.0,
+      "train_p75": 3.0,
+      "train_max": 1436.0,
+      "corr_with_target_train": 0.1717
+    },
+    {
+      "feature_name": "train_category_delay_prior_min",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 35.359905,
+      "train_std": 6.076811,
+      "train_min": 9.9784,
+      "train_p25": 32.7654,
+      "train_median": 32.7654,
+      "train_p75": 35.970001,
+      "train_max": 96.5849,
+      "corr_with_target_train": 0.0946
+    },
+    {
+      "feature_name": "route_progress_ratio",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 0.55017,
+      "train_std": 0.275763,
+      "train_min": 0.017094,
+      "train_p25": 0.313253,
+      "train_median": 0.552632,
+      "train_p75": 0.787879,
+      "train_max": 1.0,
+      "corr_with_target_train": 0.1062
+    },
+    {
+      "feature_name": "is_terminal_arrival",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 0.054324,
+      "train_std": 0.226655,
+      "train_min": 0.0,
+      "train_p25": 0.0,
+      "train_median": 0.0,
+      "train_p75": 0.0,
+      "train_max": 1.0,
+      "corr_with_target_train": -0.0357
+    },
+    {
+      "feature_name": "segment_distance_km",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 20.854391,
+      "train_std": 32.070856,
+      "train_min": 0.0,
+      "train_p25": 6.0,
+      "train_median": 9.0,
+      "train_p75": 22.0,
+      "train_max": 465.0,
+      "corr_with_target_train": 0.0726
+    },
+    {
+      "feature_name": "segment_sched_running_min",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 23.247228,
+      "train_std": 30.187905,
+      "train_min": 1.0,
+      "train_p25": 7.0,
+      "train_median": 12.0,
+      "train_p75": 27.0,
+      "train_max": 475.0,
+      "corr_with_target_train": 0.0615
+    },
+    {
+      "feature_name": "next_sched_arrival_hour",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 12.348865,
+      "train_std": 6.194435,
+      "train_min": 0.0,
+      "train_p25": 7.0,
+      "train_median": 12.0,
+      "train_p75": 18.0,
+      "train_max": 23.0,
+      "corr_with_target_train": 0.0332
+    },
+    {
+      "feature_name": "next_station_betweenness",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 0.006474,
+      "train_std": 0.025078,
+      "train_min": 0.0,
+      "train_p25": 1.6e-05,
+      "train_median": 0.000345,
+      "train_p75": 0.001899,
+      "train_max": 0.26743,
+      "corr_with_target_train": 0.0265
+    },
+    {
+      "feature_name": "next_station_hist_arr_delay_min",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 35.398178,
+      "train_std": 21.356127,
+      "train_min": -16.605799,
+      "train_p25": 18.846237,
+      "train_median": 31.475025,
+      "train_p75": 48.981403,
+      "train_max": 155.814651,
+      "corr_with_target_train": 0.3374
+    },
+    {
+      "feature_name": "transition_hist_delay_delta_min",
+      "train_n": 26528080,
+      "train_null_or_inf": 0.0,
+      "train_mean": 0.85288,
+      "train_std": 8.288912,
+      "train_min": -103.11544,
+      "train_p25": -1.045682,
+      "train_median": 1.311657,
+      "train_p75": 4.119089,
+      "train_max": 88.840248,
+      "corr_with_target_train": 0.114
+    }
+  ],
+  "global_train_priors": {
+    "n_train_transitions": 26528080,
+    "global_train_arr_mean_delay": 35.371894,
+    "global_train_arr_median_delay": 16.0,
+    "global_train_delta_mean": 0.852798,
+    "global_train_delta_median": 0.0,
+    "median_train_seg_dist_km": 9.0,
+    "median_train_seg_run_min": 12.0
+  },
+  "train_category_priors": [
+    {
+      "primary_type_code": "PASS-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 13136448,
+      "raw_cat_mean_delay_min": 32.7654,
+      "train_category_delay_prior_min": 32.7654
+    },
+    {
+      "primary_type_code": "EXP-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 9537448,
+      "raw_cat_mean_delay_min": 35.97,
+      "train_category_delay_prior_min": 35.97
+    },
+    {
+      "primary_type_code": "SF-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 3526474,
+      "raw_cat_mean_delay_min": 42.7523,
+      "train_category_delay_prior_min": 42.7522
+    },
+    {
+      "primary_type_code": "T18-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 210363,
+      "raw_cat_mean_delay_min": 13.8704,
+      "train_category_delay_prior_min": 13.8755
+    },
+    {
+      "primary_type_code": "PRM-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 108464,
+      "raw_cat_mean_delay_min": 92.6853,
+      "train_category_delay_prior_min": 92.6589
+    },
+    {
+      "primary_type_code": "RAJ-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 80053,
+      "raw_cat_mean_delay_min": 26.8459,
+      "train_category_delay_prior_min": 26.8512
+    },
+    {
+      "primary_type_code": "GRB-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 68815,
+      "raw_cat_mean_delay_min": 50.7826,
+      "train_category_delay_prior_min": 50.7714
+    },
+    {
+      "primary_type_code": "SHT-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 63489,
+      "raw_cat_mean_delay_min": 12.8371,
+      "train_category_delay_prior_min": 12.8548
+    },
+    {
+      "primary_type_code": "EXP-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 50400,
+      "raw_cat_mean_delay_min": 96.6456,
+      "train_category_delay_prior_min": 96.5849
+    },
+    {
+      "primary_type_code": "PASS-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 46985,
+      "raw_cat_mean_delay_min": 14.6221,
+      "train_category_delay_prior_min": 14.6441
+    },
+    {
+      "primary_type_code": "SHT-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 1500,
+      "raw_cat_mean_delay_min": 9.132,
+      "train_category_delay_prior_min": 9.9784
+    }
+  ],
+  "saved_files": [
+    "results/step04_02_train_features.parquet",
+    "results/step04_02_val_features.parquet",
+    "results/step04_02_test_features.parquet",
+    "results/step04_02_preprocessing_artifacts.json",
+    "results/step04_02_feature_engineering_metadata.csv",
+    "results/step04_02_split_and_feature_metadata.csv",
+    "results/figures/step04_02_feature_correlations_and_split_distributions.png"
+  ]
+}

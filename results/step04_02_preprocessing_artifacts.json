@@ -1,0 +1,193 @@
+{
+  "target_column": "target_next_delay_min",
+  "feature_columns": [
+    "curr_delay_min",
+    "prev_delay_min",
+    "prev_delay_delta_min",
+    "train_category_delay_prior_min",
+    "route_progress_ratio",
+    "is_terminal_arrival",
+    "segment_distance_km",
+    "segment_sched_running_min",
+    "next_sched_arrival_hour",
+    "next_station_betweenness",
+    "next_station_hist_arr_delay_min",
+    "transition_hist_delay_delta_min"
+  ],
+  "metadata_columns": [
+    "date_id",
+    "train_no",
+    "curr_sched_station_no",
+    "next_sched_station_no",
+    "curr_station_name",
+    "next_station_name",
+    "primary_type_code",
+    "is_premium_special",
+    "target_severity"
+  ],
+  "chronological_splits": {
+    "train": [
+      "2025-02-08",
+      "2025-11-26"
+    ],
+    "validation": [
+      "2025-11-27",
+      "2026-01-01"
+    ],
+    "test": [
+      "2026-01-02",
+      "2026-02-07"
+    ]
+  },
+  "shrinkage_smoothing_m": 50.0,
+  "global_train_priors": {
+    "n_train_transitions": 26528080,
+    "global_train_arr_mean_delay": 35.371894,
+    "global_train_arr_median_delay": 16.0,
+    "global_train_delta_mean": 0.852798,
+    "global_train_delta_median": 0.0,
+    "median_train_seg_dist_km": 9.0,
+    "median_train_seg_run_min": 12.0
+  },
+  "train_category_priors": [
+    {
+      "primary_type_code": "PASS-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 13136448,
+      "raw_cat_mean_delay_min": 32.7654,
+      "train_category_delay_prior_min": 32.7654
+    },
+    {
+      "primary_type_code": "EXP-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 9537448,
+      "raw_cat_mean_delay_min": 35.97,
+      "train_category_delay_prior_min": 35.97
+    },
+    {
+      "primary_type_code": "SF-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 3526474,
+      "raw_cat_mean_delay_min": 42.7523,
+      "train_category_delay_prior_min": 42.7522
+    },
+    {
+      "primary_type_code": "T18-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 210363,
+      "raw_cat_mean_delay_min": 13.8704,
+      "train_category_delay_prior_min": 13.8755
+    },
+    {
+      "primary_type_code": "PRM-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 108464,
+      "raw_cat_mean_delay_min": 92.6853,
+      "train_category_delay_prior_min": 92.6589
+    },
+    {
+      "primary_type_code": "RAJ-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 80053,
+      "raw_cat_mean_delay_min": 26.8459,
+      "train_category_delay_prior_min": 26.8512
+    },
+    {
+      "primary_type_code": "GRB-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 68815,
+      "raw_cat_mean_delay_min": 50.7826,
+      "train_category_delay_prior_min": 50.7714
+    },
+    {
+      "primary_type_code": "SHT-TRAINS",
+      "is_premium_special": false,
+      "train_obs_arrival_count": 63489,
+      "raw_cat_mean_delay_min": 12.8371,
+      "train_category_delay_prior_min": 12.8548
+    },
+    {
+      "primary_type_code": "EXP-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 50400,
+      "raw_cat_mean_delay_min": 96.6456,
+      "train_category_delay_prior_min": 96.5849
+    },
+    {
+      "primary_type_code": "PASS-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 46985,
+      "raw_cat_mean_delay_min": 14.6221,
+      "train_category_delay_prior_min": 14.6441
+    },
+    {
+      "primary_type_code": "SHT-TRAINS",
+      "is_premium_special": true,
+      "train_obs_arrival_count": 1500,
+      "raw_cat_mean_delay_min": 9.132,
+      "train_category_delay_prior_min": 9.9784
+    }
+  ],
+  "standard_scaler_fit_on_train": {
+    "curr_delay_min": {
+      "mean": 34.519096,
+      "std": 62.677551,
+      "median": 16.0
+    },
+    "prev_delay_min": {
+      "mean": 32.961334,
+      "std": 61.249649,
+      "median": 14.0
+    },
+    "prev_delay_delta_min": {
+      "mean": 1.557762,
+      "std": 15.932256,
+      "median": 0.0
+    },
+    "train_category_delay_prior_min": {
+      "mean": 35.359905,
+      "std": 6.076811,
+      "median": 32.7654
+    },
+    "route_progress_ratio": {
+      "mean": 0.55017,
+      "std": 0.275763,
+      "median": 0.552632
+    },
+    "is_terminal_arrival": {
+      "mean": 0.054324,
+      "std": 0.226655,
+      "median": 0.0
+    },
+    "segment_distance_km": {
+      "mean": 20.854391,
+      "std": 32.070856,
+      "median": 9.0
+    },
+    "segment_sched_running_min": {
+      "mean": 23.247228,
+      "std": 30.187905,
+      "median": 12.0
+    },
+    "next_sched_arrival_hour": {
+      "mean": 12.348865,
+      "std": 6.194435,
+      "median": 12.0
+    },
+    "next_station_betweenness": {
+      "mean": 0.006474,
+      "std": 0.025078,
+      "median": 0.000345
+    },
+    "next_station_hist_arr_delay_min": {
+      "mean": 35.398178,
+      "std": 21.356127,
+      "median": 31.475025
+    },
+    "transition_hist_delay_delta_min": {
+      "mean": 0.85288,
+      "std": 8.288912,
+      "median": 1.311657
+    }
+  }
+}

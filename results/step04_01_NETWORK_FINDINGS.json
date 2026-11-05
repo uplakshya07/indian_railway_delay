@@ -1,0 +1,628 @@
+{
+  "step": "step04_01_network_bottleneck_analysis",
+  "chronological_boundaries": {
+    "train": [
+      "2025-02-08",
+      "2025-11-26"
+    ],
+    "validation": [
+      "2025-11-27",
+      "2026-01-01"
+    ],
+    "test": [
+      "2026-01-02",
+      "2026-02-07"
+    ],
+    "partition_summary": [
+      {
+        "chronological_partition": "1_Train (2025-02-08 to 2025-11-26)",
+        "n_days": 292,
+        "total_rows": 29371388,
+        "pct_total_rows": 80.2172,
+        "has_schedule_rows": 28683754.0,
+        "observed_rows": 28502262.0,
+        "pred_eligible_obs_rows": 28264191.0,
+        "pred_eligible_imp_rows": 419563.0
+      },
+      {
+        "chronological_partition": "2_Validation (2025-11-27 to 2026-01-01)",
+        "n_days": 36,
+        "total_rows": 3583894,
+        "pct_total_rows": 9.7881,
+        "has_schedule_rows": 3500548.0,
+        "observed_rows": 3498967.0,
+        "pred_eligible_obs_rows": 3470698.0,
+        "pred_eligible_imp_rows": 29850.0
+      },
+      {
+        "chronological_partition": "3_Test (2026-01-02 to 2026-02-07)",
+        "n_days": 37,
+        "total_rows": 3659542,
+        "pct_total_rows": 9.9947,
+        "has_schedule_rows": 3571943.0,
+        "observed_rows": 3581089.0,
+        "pred_eligible_obs_rows": 3545109.0,
+        "pred_eligible_imp_rows": 26834.0
+      }
+    ]
+  },
+  "static_schedule_graph": {
+    "n_nodes": 8629,
+    "n_directed_edges": 31514,
+    "weakly_connected_components": 5,
+    "largest_wcc_nodes": 8598,
+    "strongly_connected_components": 36,
+    "largest_scc_nodes": 8571
+  },
+  "artifact_validation": {
+    "station_stats_parquet": {
+      "n_rows": 8629,
+      "n_unique_stations": 8629,
+      "null_station_keys": 0.0,
+      "null_centrality": 0.0,
+      "stations_with_train_obs": 8136.0
+    },
+    "transition_stats_parquet": {
+      "n_rows": 31514,
+      "n_unique_edges": 31514,
+      "null_edge_keys": 0.0,
+      "edges_with_train_obs": 29079.0
+    },
+    "temporal_rank_stability_ge500": {
+      "station_mean_delay_train_vs_full_r": 0.9952,
+      "station_bottleneck_train_vs_full_r": 0.9898
+    }
+  },
+  "top10_betweenness_stations": [
+    {
+      "station_name": "DDU",
+      "station_full_name": "PT DEEN DAYAL UPADHYAY JN",
+      "station_zone": "ECR",
+      "total_degree": 73,
+      "betweenness_centrality": 0.26743
+    },
+    {
+      "station_name": "BZA",
+      "station_full_name": "VIJAYAWADA JN",
+      "station_zone": "SCR",
+      "total_degree": 73,
+      "betweenness_centrality": 0.249917
+    },
+    {
+      "station_name": "NGP",
+      "station_full_name": "NAGPUR",
+      "station_zone": "CR",
+      "total_degree": 58,
+      "betweenness_centrality": 0.231022
+    },
+    {
+      "station_name": "CNB",
+      "station_full_name": "KANPUR CENTRAL",
+      "station_zone": "NCR",
+      "total_degree": 76,
+      "betweenness_centrality": 0.205451
+    },
+    {
+      "station_name": "NDLS",
+      "station_full_name": "NEW DELHI",
+      "station_zone": "NR",
+      "total_degree": 60,
+      "betweenness_centrality": 0.200971
+    },
+    {
+      "station_name": "BPQ",
+      "station_full_name": "BALHARSHAH",
+      "station_zone": "CR",
+      "total_degree": 36,
+      "betweenness_centrality": 0.195945
+    },
+    {
+      "station_name": "VGLJ",
+      "station_full_name": "V LAKSHMIBAI JHANSI",
+      "station_zone": "NCR",
+      "total_degree": 51,
+      "betweenness_centrality": 0.177607
+    },
+    {
+      "station_name": "BRC",
+      "station_full_name": "VADODARA JN",
+      "station_zone": "WR",
+      "total_degree": 52,
+      "betweenness_centrality": 0.137264
+    },
+    {
+      "station_name": "KOTA",
+      "station_full_name": "KOTA JN",
+      "station_zone": "WCR",
+      "total_degree": 50,
+      "betweenness_centrality": 0.12087
+    },
+    {
+      "station_name": "BPL",
+      "station_full_name": "BHOPAL JN",
+      "station_zone": "WCR",
+      "total_degree": 41,
+      "betweenness_centrality": 0.119454
+    }
+  ],
+  "top10_composite_bottleneck_hubs": [
+    {
+      "station_name": "KGP",
+      "station_full_name": "KHARAGPUR JN",
+      "station_zone": "SER",
+      "total_degree": 50,
+      "betweenness_centrality": 0.076514,
+      "train_obs_stops": 31950,
+      "train_arr_mean_delay_min": 94.44,
+      "train_bottleneck_gt_2sd_pct": 15.3615,
+      "composite_hub_stress_score": 0.9382
+    },
+    {
+      "station_name": "NGP",
+      "station_full_name": "NAGPUR",
+      "station_zone": "CR",
+      "total_degree": 58,
+      "betweenness_centrality": 0.231022,
+      "train_obs_stops": 27027,
+      "train_arr_mean_delay_min": 59.6713,
+      "train_bottleneck_gt_2sd_pct": 9.5608,
+      "composite_hub_stress_score": 0.9241
+    },
+    {
+      "station_name": "TATA",
+      "station_full_name": "TATANAGAR JN",
+      "station_zone": "SER",
+      "total_degree": 44,
+      "betweenness_centrality": 0.0659,
+      "train_obs_stops": 23734,
+      "train_arr_mean_delay_min": 110.1927,
+      "train_bottleneck_gt_2sd_pct": 17.6203,
+      "composite_hub_stress_score": 0.9141
+    },
+    {
+      "station_name": "BJU",
+      "station_full_name": "BARAUNI JN",
+      "station_zone": "ECR",
+      "total_degree": 55,
+      "betweenness_centrality": 0.118252,
+      "train_obs_stops": 25063,
+      "train_arr_mean_delay_min": 61.1934,
+      "train_bottleneck_gt_2sd_pct": 9.0891,
+      "composite_hub_stress_score": 0.9065
+    },
+    {
+      "station_name": "BSL",
+      "station_full_name": "BHUSAVAL JN",
+      "station_zone": "CR",
+      "total_degree": 53,
+      "betweenness_centrality": 0.096378,
+      "train_obs_stops": 39072,
+      "train_arr_mean_delay_min": 62.5285,
+      "train_bottleneck_gt_2sd_pct": 9.6207,
+      "composite_hub_stress_score": 0.9062
+    },
+    {
+      "station_name": "GKP",
+      "station_full_name": "GORAKHPUR JN",
+      "station_zone": "NER",
+      "total_degree": 47,
+      "betweenness_centrality": 0.035701,
+      "train_obs_stops": 29891,
+      "train_arr_mean_delay_min": 77.2824,
+      "train_bottleneck_gt_2sd_pct": 12.8266,
+      "composite_hub_stress_score": 0.8641
+    },
+    {
+      "station_name": "VZM",
+      "station_full_name": "VIZIANAGRAM JN",
+      "station_zone": "ECOR",
+      "total_degree": 40,
+      "betweenness_centrality": 0.111744,
+      "train_obs_stops": 22393,
+      "train_arr_mean_delay_min": 62.6367,
+      "train_bottleneck_gt_2sd_pct": 8.2972,
+      "composite_hub_stress_score": 0.8549
+    },
+    {
+      "station_name": "CNB",
+      "station_full_name": "KANPUR CENTRAL",
+      "station_zone": "NCR",
+      "total_degree": 76,
+      "betweenness_centrality": 0.205451,
+      "train_obs_stops": 55548,
+      "train_arr_mean_delay_min": 50.6643,
+      "train_bottleneck_gt_2sd_pct": 6.1316,
+      "composite_hub_stress_score": 0.8457
+    },
+    {
+      "station_name": "DDU",
+      "station_full_name": "PT DEEN DAYAL UPADHYAY JN",
+      "station_zone": "ECR",
+      "total_degree": 73,
+      "betweenness_centrality": 0.26743,
+      "train_obs_stops": 39464,
+      "train_arr_mean_delay_min": 40.3966,
+      "train_bottleneck_gt_2sd_pct": 5.9168,
+      "composite_hub_stress_score": 0.8082
+    },
+    {
+      "station_name": "LKO",
+      "station_full_name": "LUCKNOW NR",
+      "station_zone": "NR",
+      "total_degree": 58,
+      "betweenness_centrality": 0.062202,
+      "train_obs_stops": 36258,
+      "train_arr_mean_delay_min": 51.155,
+      "train_bottleneck_gt_2sd_pct": 6.633,
+      "composite_hub_stress_score": 0.8071
+    }
+  ],
+  "top10_delay_amplifying_transitions_ge500": [
+    {
+      "from_station": "ASH",
+      "to_station": "BST",
+      "from_station_zone": "NER",
+      "to_station_zone": "NER",
+      "scheduled_train_count": 2,
+      "train_obs_transition_count": 545,
+      "train_from_mean_delay_min": 140.756,
+      "train_to_mean_delay_min": 230.3872,
+      "train_mean_delay_delta_min": 89.6312,
+      "train_median_delay_delta_min": 76.0,
+      "train_amp_gt_5m_rate": 0.847706
+    },
+    {
+      "from_station": "MDKU",
+      "to_station": "TSR",
+      "from_station_zone": "SCR",
+      "to_station_zone": "SCR",
+      "scheduled_train_count": 5,
+      "train_obs_transition_count": 874,
+      "train_from_mean_delay_min": 45.2483,
+      "train_to_mean_delay_min": 118.6659,
+      "train_mean_delay_delta_min": 73.4176,
+      "train_median_delay_delta_min": 83.0,
+      "train_amp_gt_5m_rate": 0.915332
+    },
+    {
+      "from_station": "BST",
+      "to_station": "ASH",
+      "from_station_zone": "NER",
+      "to_station_zone": "NER",
+      "scheduled_train_count": 2,
+      "train_obs_transition_count": 545,
+      "train_from_mean_delay_min": 280.3651,
+      "train_to_mean_delay_min": 353.1229,
+      "train_mean_delay_delta_min": 72.7578,
+      "train_median_delay_delta_min": 77.0,
+      "train_amp_gt_5m_rate": 0.790826
+    },
+    {
+      "from_station": "KTKA",
+      "to_station": "MQN",
+      "from_station_zone": "SCR",
+      "to_station_zone": "SCR",
+      "scheduled_train_count": 6,
+      "train_obs_transition_count": 876,
+      "train_from_mean_delay_min": 17.8653,
+      "train_to_mean_delay_min": 90.1473,
+      "train_mean_delay_delta_min": 72.282,
+      "train_median_delay_delta_min": 88.0,
+      "train_amp_gt_5m_rate": 0.914384
+    },
+    {
+      "from_station": "CKP",
+      "to_station": "TATA",
+      "from_station_zone": "SER",
+      "to_station_zone": "SER",
+      "scheduled_train_count": 22,
+      "train_obs_transition_count": 2115,
+      "train_from_mean_delay_min": 186.2298,
+      "train_to_mean_delay_min": 257.0203,
+      "train_mean_delay_delta_min": 70.7905,
+      "train_median_delay_delta_min": 67.0,
+      "train_amp_gt_5m_rate": 0.91253
+    },
+    {
+      "from_station": "RPRL",
+      "to_station": "ANB",
+      "from_station_zone": "SCR",
+      "to_station_zone": "SCR",
+      "scheduled_train_count": 6,
+      "train_obs_transition_count": 1166,
+      "train_from_mean_delay_min": 19.2256,
+      "train_to_mean_delay_min": 87.3791,
+      "train_mean_delay_delta_min": 68.1535,
+      "train_median_delay_delta_min": 68.0,
+      "train_amp_gt_5m_rate": 0.896226
+    },
+    {
+      "from_station": "GKT",
+      "to_station": "G",
+      "from_station_zone": "SECR",
+      "to_station_zone": "SECR",
+      "scheduled_train_count": 8,
+      "train_obs_transition_count": 1125,
+      "train_from_mean_delay_min": 80.7484,
+      "train_to_mean_delay_min": 146.3991,
+      "train_mean_delay_delta_min": 65.6507,
+      "train_median_delay_delta_min": -6.0,
+      "train_amp_gt_5m_rate": 0.352889
+    },
+    {
+      "from_station": "BLRR",
+      "to_station": "BYPL",
+      "from_station_zone": "SWR",
+      "to_station_zone": "SWR",
+      "scheduled_train_count": 3,
+      "train_obs_transition_count": 584,
+      "train_from_mean_delay_min": 12.5565,
+      "train_to_mean_delay_min": 77.8425,
+      "train_mean_delay_delta_min": 65.286,
+      "train_median_delay_delta_min": 44.0,
+      "train_amp_gt_5m_rate": 0.979452
+    },
+    {
+      "from_station": "PUNA",
+      "to_station": "TRDI",
+      "from_station_zone": "SECR",
+      "to_station_zone": "SECR",
+      "scheduled_train_count": 4,
+      "train_obs_transition_count": 1033,
+      "train_from_mean_delay_min": 72.7144,
+      "train_to_mean_delay_min": 136.6718,
+      "train_mean_delay_delta_min": 63.9574,
+      "train_median_delay_delta_min": 0.0,
+      "train_amp_gt_5m_rate": 0.317522
+    },
+    {
+      "from_station": "CPR",
+      "to_station": "MFP",
+      "from_station_zone": "NER",
+      "to_station_zone": "ECR",
+      "scheduled_train_count": 5,
+      "train_obs_transition_count": 770,
+      "train_from_mean_delay_min": 294.639,
+      "train_to_mean_delay_min": 358.5442,
+      "train_mean_delay_delta_min": 63.9052,
+      "train_median_delay_delta_min": 52.0,
+      "train_amp_gt_5m_rate": 0.864935
+    }
+  ],
+  "top10_trunk_corridor_amplifiers_ge3000": [
+    {
+      "from_station": "KGP",
+      "to_station": "SRC",
+      "from_station_zone": "SER",
+      "to_station_zone": "SER",
+      "scheduled_train_count": 54,
+      "train_obs_transition_count": 4027,
+      "train_from_mean_delay_min": 155.0802,
+      "train_to_mean_delay_min": 194.9086,
+      "train_mean_delay_delta_min": 39.8284,
+      "train_median_delay_delta_min": 34.0,
+      "train_amp_gt_5m_rate": 0.702508
+    },
+    {
+      "from_station": "BVRT",
+      "to_station": "AKVD",
+      "from_station_zone": "SCR",
+      "to_station_zone": "SCR",
+      "scheduled_train_count": 26,
+      "train_obs_transition_count": 3335,
+      "train_from_mean_delay_min": 13.5964,
+      "train_to_mean_delay_min": 38.8981,
+      "train_mean_delay_delta_min": 25.3016,
+      "train_median_delay_delta_min": 21.0,
+      "train_amp_gt_5m_rate": 0.761619
+    },
+    {
+      "from_station": "NDLS",
+      "to_station": "CNB",
+      "from_station_zone": "NR",
+      "to_station_zone": "NCR",
+      "scheduled_train_count": 22,
+      "train_obs_transition_count": 4048,
+      "train_from_mean_delay_min": 23.8207,
+      "train_to_mean_delay_min": 45.2705,
+      "train_mean_delay_delta_min": 21.4499,
+      "train_median_delay_delta_min": 14.0,
+      "train_amp_gt_5m_rate": 0.722332
+    },
+    {
+      "from_station": "BLS",
+      "to_station": "KGP",
+      "from_station_zone": "SER",
+      "to_station_zone": "SER",
+      "scheduled_train_count": 48,
+      "train_obs_transition_count": 3887,
+      "train_from_mean_delay_min": 87.3188,
+      "train_to_mean_delay_min": 108.3658,
+      "train_mean_delay_delta_min": 21.0471,
+      "train_median_delay_delta_min": 16.0,
+      "train_amp_gt_5m_rate": 0.682274
+    },
+    {
+      "from_station": "HWH",
+      "to_station": "BWN",
+      "from_station_zone": "ER",
+      "to_station_zone": "ER",
+      "scheduled_train_count": 25,
+      "train_obs_transition_count": 4505,
+      "train_from_mean_delay_min": 5.7703,
+      "train_to_mean_delay_min": 25.3816,
+      "train_mean_delay_delta_min": 19.6113,
+      "train_median_delay_delta_min": 19.0,
+      "train_amp_gt_5m_rate": 0.946948
+    },
+    {
+      "from_station": "HWH",
+      "to_station": "KGP",
+      "from_station_zone": "ER",
+      "to_station_zone": "SER",
+      "scheduled_train_count": 29,
+      "train_obs_transition_count": 4407,
+      "train_from_mean_delay_min": 50.7273,
+      "train_to_mean_delay_min": 69.0368,
+      "train_mean_delay_delta_min": 18.3095,
+      "train_median_delay_delta_min": 13.0,
+      "train_amp_gt_5m_rate": 0.764239
+    },
+    {
+      "from_station": "JBP",
+      "to_station": "KTE",
+      "from_station_zone": "WCR",
+      "to_station_zone": "WCR",
+      "scheduled_train_count": 65,
+      "train_obs_transition_count": 5117,
+      "train_from_mean_delay_min": 44.908,
+      "train_to_mean_delay_min": 62.6502,
+      "train_mean_delay_delta_min": 17.7422,
+      "train_median_delay_delta_min": 16.0,
+      "train_amp_gt_5m_rate": 0.787766
+    },
+    {
+      "from_station": "JJKR",
+      "to_station": "CTC",
+      "from_station_zone": "ECOR",
+      "to_station_zone": "ECOR",
+      "scheduled_train_count": 48,
+      "train_obs_transition_count": 5048,
+      "train_from_mean_delay_min": 90.2286,
+      "train_to_mean_delay_min": 106.7686,
+      "train_mean_delay_delta_min": 16.54,
+      "train_median_delay_delta_min": 16.0,
+      "train_amp_gt_5m_rate": 0.752773
+    },
+    {
+      "from_station": "ROU",
+      "to_station": "GP",
+      "from_station_zone": "SER",
+      "to_station_zone": "SER",
+      "scheduled_train_count": 18,
+      "train_obs_transition_count": 4072,
+      "train_from_mean_delay_min": 119.9285,
+      "train_to_mean_delay_min": 136.4212,
+      "train_mean_delay_delta_min": 16.4926,
+      "train_median_delay_delta_min": 15.0,
+      "train_amp_gt_5m_rate": 0.840373
+    },
+    {
+      "from_station": "CTC",
+      "to_station": "JJKR",
+      "from_station_zone": "ECOR",
+      "to_station_zone": "ECOR",
+      "scheduled_train_count": 50,
+      "train_obs_transition_count": 4769,
+      "train_from_mean_delay_min": 63.4825,
+      "train_to_mean_delay_min": 79.8863,
+      "train_mean_delay_delta_min": 16.4039,
+      "train_median_delay_delta_min": 13.0,
+      "train_amp_gt_5m_rate": 0.750472
+    }
+  ],
+  "delay_propagation_summary": {
+    "lag_autocorrelations": {
+      "n_lag1_pairs": 26528080,
+      "r_lag1_all": 0.96,
+      "r_lag1_intermediate": 0.9657,
+      "r_lag1_terminal": 0.9068,
+      "n_lag2_pairs": 25048504,
+      "r_lag2_all": 0.9375,
+      "n_lag3_pairs": 23592699,
+      "r_lag3_all": 0.9162
+    },
+    "upstream_regimes": [
+      {
+        "upstream_delay_regime": "1_Early_or_OnTime (<=0m)",
+        "n_transitions": 3766421,
+        "share_pct": 14.2,
+        "mean_upstream_delay_min": -0.0,
+        "mean_downstream_delay_min": 4.95,
+        "median_downstream_delay_min": 0.0,
+        "mean_delay_delta_min": 4.95,
+        "median_delay_delta_min": 0.0,
+        "downstream_delayed_gt_15m_pct": 9.63,
+        "downstream_delayed_gt_60m_pct": 1.01,
+        "amplified_gt_5m_pct": 22.99,
+        "recovered_lt_m5m_pct": 2.63
+      },
+      {
+        "upstream_delay_regime": "2_Minor_Delay (1..15m)",
+        "n_transitions": 9450502,
+        "share_pct": 35.62,
+        "mean_upstream_delay_min": 7.13,
+        "mean_downstream_delay_min": 9.08,
+        "median_downstream_delay_min": 8.0,
+        "mean_delay_delta_min": 1.95,
+        "median_delay_delta_min": 0.0,
+        "downstream_delayed_gt_15m_pct": 15.55,
+        "downstream_delayed_gt_60m_pct": 0.42,
+        "amplified_gt_5m_pct": 18.03,
+        "recovered_lt_m5m_pct": 8.89
+      },
+      {
+        "upstream_delay_regime": "3_Moderate_Delay (16..60m)",
+        "n_transitions": 9211355,
+        "share_pct": 34.72,
+        "mean_upstream_delay_min": 31.8,
+        "mean_downstream_delay_min": 30.83,
+        "median_downstream_delay_min": 29.0,
+        "mean_delay_delta_min": -0.97,
+        "median_delay_delta_min": 0.0,
+        "downstream_delayed_gt_15m_pct": 84.3,
+        "downstream_delayed_gt_60m_pct": 4.71,
+        "amplified_gt_5m_pct": 17.28,
+        "recovered_lt_m5m_pct": 21.1
+      },
+      {
+        "upstream_delay_regime": "4_Heavy_Delay (61..167.65m)",
+        "n_transitions": 3268178,
+        "share_pct": 12.32,
+        "mean_upstream_delay_min": 95.96,
+        "mean_downstream_delay_min": 94.08,
+        "median_downstream_delay_min": 89.0,
+        "mean_delay_delta_min": -1.88,
+        "median_delay_delta_min": 0.0,
+        "downstream_delayed_gt_15m_pct": 97.79,
+        "downstream_delayed_gt_60m_pct": 88.65,
+        "amplified_gt_5m_pct": 21.46,
+        "recovered_lt_m5m_pct": 21.99
+      },
+      {
+        "upstream_delay_regime": "5_Bottleneck_State (>167.65m)",
+        "n_transitions": 831624,
+        "share_pct": 3.13,
+        "mean_upstream_delay_min": 290.72,
+        "mean_downstream_delay_min": 291.48,
+        "median_downstream_delay_min": 238.0,
+        "mean_delay_delta_min": 0.75,
+        "median_delay_delta_min": 1.0,
+        "downstream_delayed_gt_15m_pct": 99.72,
+        "downstream_delayed_gt_60m_pct": 99.56,
+        "amplified_gt_5m_pct": 29.51,
+        "recovered_lt_m5m_pct": 22.51
+      }
+    ],
+    "inter_zone_vs_intra_zone": [
+      {
+        "transition_type": "Inter-Zone Boundary Transition",
+        "n_directed_edges": 1284,
+        "total_obs_transitions": 918587.0,
+        "weighted_mean_delay_delta_min": -1.126,
+        "unweighted_edge_mean_delta_min": -0.6189,
+        "median_edge_mean_delta_min": 1.1277,
+        "weighted_amp_gt_5m_pct": 29.22
+      },
+      {
+        "transition_type": "Intra-Zone Transition",
+        "n_directed_edges": 27795,
+        "total_obs_transitions": 25609493.0,
+        "weighted_mean_delay_delta_min": 0.9238,
+        "unweighted_edge_mean_delta_min": 0.9827,
+        "median_edge_mean_delta_min": 1.2945,
+        "weighted_amp_gt_5m_pct": 18.9
+      }
+    ]
+  }
+}

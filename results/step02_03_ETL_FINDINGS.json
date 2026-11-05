@@ -1,0 +1,76 @@
+{
+    "initial_summary": {
+        "total_rows": 36629806,
+        "null_delays": 0,
+        "imputed_rows": 1032906,
+        "observed_rows": 35596900
+    },
+    "step1_negative_delay_validation": {
+        "total_early_records": 609727.0,
+        "pct_of_total": 1.6646,
+        "observed_early_records": 584981.0,
+        "imputed_early_records": 24746.0,
+        "max_early_minutes": -120.0,
+        "min_early_minutes": -1.0,
+        "mean_early_minutes": -13.1006,
+        "median_early_minutes": -10.0,
+        "std_dev_early_minutes": 11.0904
+    },
+    "step2_noise_removal": {
+        "total_rows_before": 36629806.0,
+        "min_delay_before": -120.0,
+        "max_delay_before": 525592.0,
+        "global_mean_before": 36.7497,
+        "global_std_before": 229.8827,
+        "pos_mean_before": 43.6007,
+        "pos_std_before": 249.0261,
+        "noise_rows_over_1440": 14982.0,
+        "observed_noise_rows": 14582.0,
+        "imputed_noise_rows": 400.0,
+        "surviving_rows": 36614824,
+        "surviving_observed_rows": 35582318,
+        "surviving_imputed_rows": 1032506
+    },
+    "step3_outlier_boundaries": {
+        "global_cleaned": {
+            "true_mean": 35.59942,
+            "true_std_dev": 66.026817,
+            "left_wall_2sd": -96.454213,
+            "actual_min_delay": -120.0,
+            "outlier_threshold_2sd": 167.653054,
+            "outlier_threshold_3sd": 233.67987,
+            "high_risk_records_gt_2sd": 1273458.0,
+            "critical_records_gt_3sd": 659943.0
+        },
+        "positive_tail_cleaned": {
+            "pos_true_mean": 42.247231,
+            "pos_true_std_dev": 69.61557,
+            "pos_threshold_2sd": 181.478371,
+            "pos_threshold_3sd": 251.093941,
+            "pos_high_risk_records_gt_2sd": 1094178.0,
+            "pos_critical_records_gt_3sd": 563763.0
+        },
+        "observed_only_check": {
+            "obs_global_mean": 35.677161,
+            "obs_global_std": 65.849781,
+            "obs_pos_mean": 42.268575,
+            "obs_pos_std": 69.37937
+        }
+    },
+    "step4_dim_date": {
+        "min_date": "2025-02-08 00:00:00",
+        "max_date": "2026-02-07 00:00:00",
+        "distinct_dates_in_delay": 365,
+        "expected_calendar_days": 365
+    },
+    "final_verification": {
+        "total_cleaned_rows": 36614824.0,
+        "null_delays": 0.0,
+        "null_imputation_flags": 0.0,
+        "total_imputed_rows": 1032506.0,
+        "total_observed_rows": 35582318.0,
+        "pct_imputed": 2.8199,
+        "final_min_delay": -120.0,
+        "final_max_delay": 1440.0
+    }
+}

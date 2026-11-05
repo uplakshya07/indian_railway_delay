@@ -1,0 +1,159 @@
+{
+    "stop_stability": {
+        "distinct_delay_stops": 141646.0,
+        "total_rows": 36614824.0,
+        "unstable_stops_across_dates": 0.0
+    },
+    "step1_classification": [
+        {
+            "cls": "exact",
+            "n_stops": 112948,
+            "pct_stops": 79.7396,
+            "n_rows": 30018784.0,
+            "pct_rows": 81.9853,
+            "n_observed_rows": 29661304.0,
+            "n_imputed_rows": 357480.0
+        },
+        {
+            "cls": "shifted",
+            "n_stops": 24495,
+            "pct_stops": 17.2931,
+            "n_rows": 5737461.0,
+            "pct_rows": 15.6698,
+            "n_observed_rows": 5618694.0,
+            "n_imputed_rows": 118767.0
+        },
+        {
+            "cls": "different_station",
+            "n_stops": 4203,
+            "pct_stops": 2.9673,
+            "n_rows": 858579.0,
+            "pct_rows": 2.3449,
+            "n_observed_rows": 302320.0,
+            "n_imputed_rows": 556259.0
+        }
+    ],
+    "step2_root_cause": {
+        "shift_offset_distribution": [
+            {
+                "shift_offset": -1,
+                "n_stops": 15944,
+                "n_rows": 3596911.0,
+                "pct_of_shifted_rows": 62.6917
+            },
+            {
+                "shift_offset": -2,
+                "n_stops": 4402,
+                "n_rows": 1073818.0,
+                "pct_of_shifted_rows": 18.7159
+            },
+            {
+                "shift_offset": -3,
+                "n_stops": 1413,
+                "n_rows": 366257.0,
+                "pct_of_shifted_rows": 6.3836
+            },
+            {
+                "shift_offset": -4,
+                "n_stops": 622,
+                "n_rows": 168093.0,
+                "pct_of_shifted_rows": 2.9297
+            },
+            {
+                "shift_offset": 1,
+                "n_stops": 626,
+                "n_rows": 145450.0,
+                "pct_of_shifted_rows": 2.5351
+            },
+            {
+                "shift_offset": -5,
+                "n_stops": 400,
+                "n_rows": 99158.0,
+                "pct_of_shifted_rows": 1.7283
+            },
+            {
+                "shift_offset": -6,
+                "n_stops": 263,
+                "n_rows": 63481.0,
+                "pct_of_shifted_rows": 1.1064
+            },
+            {
+                "shift_offset": -7,
+                "n_stops": 171,
+                "n_rows": 57446.0,
+                "pct_of_shifted_rows": 1.0012
+            },
+            {
+                "shift_offset": -8,
+                "n_stops": 187,
+                "n_rows": 56162.0,
+                "pct_of_shifted_rows": 0.9789
+            },
+            {
+                "shift_offset": 2,
+                "n_stops": 81,
+                "n_rows": 24627.0,
+                "pct_of_shifted_rows": 0.4292
+            },
+            {
+                "shift_offset": -10,
+                "n_stops": 48,
+                "n_rows": 14764.0,
+                "pct_of_shifted_rows": 0.2573
+            },
+            {
+                "shift_offset": 5,
+                "n_stops": 37,
+                "n_rows": 12260.0,
+                "pct_of_shifted_rows": 0.2137
+            },
+            {
+                "shift_offset": -15,
+                "n_stops": 30,
+                "n_rows": 10602.0,
+                "pct_of_shifted_rows": 0.1848
+            },
+            {
+                "shift_offset": -9,
+                "n_stops": 35,
+                "n_rows": 6484.0,
+                "pct_of_shifted_rows": 0.113
+            },
+            {
+                "shift_offset": 20,
+                "n_stops": 16,
+                "n_rows": 5423.0,
+                "pct_of_shifted_rows": 0.0945
+            }
+        ],
+        "train_impact_breakdown": {
+            "total_trains_in_delay": 6999,
+            "fully_clean_trains": 4964,
+            "under_half_affected_trains": 833,
+            "over_half_affected_trains": 1019,
+            "fully_affected_trains": 183
+        },
+        "route_length_comparison": {
+            "total_raw_delay_trains": 7033,
+            "raw_identical_route_len_trains": 4902,
+            "raw_delay_1_to_8_stops_longer": 1918,
+            "raw_delay_gt_8_stops_longer": 95,
+            "raw_delay_shorter_than_sched": 85,
+            "raw_train_not_in_sched": 33,
+            "cleaned_identical_route_len_trains": 6914
+        }
+    },
+    "step3_alignment_resolution": {
+        "total_stops_in_map": 141646.0,
+        "aligned_stops": 137443.0,
+        "unaligned_stops": 4203.0,
+        "total_rows": 36614824.0,
+        "aligned_rows": 35756245.0,
+        "aligned_rows_pct": 97.6551,
+        "unaligned_rows": 858579.0,
+        "unaligned_rows_pct": 2.3449,
+        "ambiguous_name_matches": 0.0,
+        "collision_stops": 0.0,
+        "duplicate_target_sched_stops": 0
+    }
+}
